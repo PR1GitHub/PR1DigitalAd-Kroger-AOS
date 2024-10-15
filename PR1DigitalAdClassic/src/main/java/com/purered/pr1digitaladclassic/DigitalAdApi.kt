@@ -8,6 +8,7 @@ import retrofit2.http.Query
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
+
 internal class DigitalAdApi {
 }
 
@@ -86,14 +87,14 @@ internal interface ApiService{
         @Query("mode") mode: String
     ): WeeklyAd
 
-//https://oms-kroger-webapp-da-classic-api-qa.azurewebsites.net/api/dacs/241a4bd1-9b92-42ef-9ec0-18169bbe83eb?location=03500590
+    //https://oms-kroger-webapp-da-classic-api-qa.azurewebsites.net/api/dacs/241a4bd1-9b92-42ef-9ec0-18169bbe83eb?location=03500590
     @GET("dacs/{adId}")
     suspend fun getAdDetails(
         @Path("adId") eventId: String,
         @Query("location") location: String
     ): WeeklyAd
 
-//https://localhost:44341/api/dacs/{adId}/pages/{pageId}?location=
+    //https://localhost:44341/api/dacs/{adId}/pages/{pageId}?location=
 //{location}
     //dacs/241a4bd1-9b92-42ef-9ec0-18169bbe83eb/pages/09893878-883b-4044-a054-28375a0a0e6c?location=03500590
     @GET("dacs/{adId}/pages/{pageId}")
@@ -104,7 +105,7 @@ internal interface ApiService{
     ): AdPage
 
 
-///dacs/{adId}/offers/{offerId}?location=
+    ///dacs/{adId}/offers/{offerId}?location=
 //{location}
     @GET("dacs/{adId}/offers/{offerId}")
     suspend fun getOfferDetails(

@@ -3,6 +3,9 @@ package com.purered.pr1digitaladclassic
 import android.content.Context
 import android.util.DisplayMetrics
 import android.view.WindowManager
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -18,9 +21,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import java.text.SimpleDateFormat
-import java.util.Locale
-
 
 internal object Dimens {
 
@@ -193,5 +193,3 @@ internal fun getDayOfMonthSuffix(day: Int): String {
         else -> "th"
     }
 }
-
-

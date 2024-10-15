@@ -24,7 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 
-
 @Composable
 internal fun MapAreaContentView(
     modifier: Modifier,

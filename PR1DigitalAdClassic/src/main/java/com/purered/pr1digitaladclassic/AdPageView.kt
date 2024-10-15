@@ -44,8 +44,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.toSize
 import coil.imageLoader
-import kotlin.math.floor
 
+import kotlin.math.floor
 
 @Composable
 internal fun AdPageView(
@@ -349,7 +349,7 @@ internal fun AdPageView(
         )
         if (imageState== "success" && convertedHotMaps.isNotEmpty()) {
 
-          //  println(" DrawHotMaps DrawHotMaps DrawHotMaps DrawHotMaps")
+            //  println(" DrawHotMaps DrawHotMaps DrawHotMaps DrawHotMaps")
 
 
             DrawHotMaps(

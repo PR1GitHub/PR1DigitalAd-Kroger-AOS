@@ -1,4 +1,5 @@
 package com.purered.pr1digitaladclassic
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -17,7 +18,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.absoluteValue
-
 
 @Composable
 fun ZoomableBoxContent(

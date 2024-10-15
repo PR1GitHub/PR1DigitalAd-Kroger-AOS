@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-
 val DigitalAdLibVersion = "0.0.4" // This is the version of the DigitalAd library
 
 

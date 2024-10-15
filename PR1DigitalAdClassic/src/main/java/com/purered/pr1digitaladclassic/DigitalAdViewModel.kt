@@ -2,9 +2,10 @@ package com.purered.pr1digitaladclassic
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+
+import androidx.lifecycle.ViewModel
 
 internal  data class DigitalAdState(
     val loading : Boolean = true,
