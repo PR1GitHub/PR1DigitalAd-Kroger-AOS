@@ -9,6 +9,9 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
 
+import retrofit2.http.POST // newly added
+import retrofit2.http.Body // newly added
+
 internal class DigitalAdApi {
 }
 
@@ -115,6 +118,17 @@ internal interface ApiService{
     ):OfferDetails
 
 
+    //    https://oms-kroger-webapp-da-classic-api-qa.azurewebsites.net/api/dacs/savelogs
+//    @POST("dacs/savelogs")
+//    suspend fun saveLogDetails(
+//        //@Path("value") value: SaveLogDetails
+//        @Body value: SaveLogDetails
+//    ):SaveLogs
+
+    @POST("dacs/savelogs")
+    suspend fun saveLogDetails(
+        @Body saveLogs: SaveLogs
+    ): SaveLogs
 
 
 }

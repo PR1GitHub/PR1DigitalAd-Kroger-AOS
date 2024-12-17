@@ -95,6 +95,8 @@ internal data class WeeklyAd(
     val eventId: Int,
     val eventName: String,
     val pages: List<AdPage>,
+    val logLevelCode: Int,
+    val isLogEnabled: Boolean
 )
 
 
@@ -141,4 +143,17 @@ internal  data class BoxData(
     val top: Float,
     val right: Float,
     val bottom: Float
+)
+
+
+data class SaveLogs(
+    val value: SaveLogDetails
+)
+
+data class SaveLogDetails(
+    val adId: String,
+    val loc: String,
+    val offerId: String,
+    val url: String,
+    val appDetails: String
 )

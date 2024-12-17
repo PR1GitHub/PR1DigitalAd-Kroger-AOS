@@ -1,5 +1,6 @@
 package com.purered.pr1digitaladclassic
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,8 +45,9 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.toSize
 import coil.imageLoader
-
 import kotlin.math.floor
+
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 internal fun AdPageView(
@@ -54,7 +56,8 @@ internal fun AdPageView(
     adId:String,
     location:String,
     onHotSpotClick: ( payload:SpotClickPayload) -> Unit,
-    key: Int
+    key: Int,
+    saveLogEnabled: Boolean
 ) {
     var imageWidth by remember { mutableStateOf(0f) }
     var imageHeight by remember { mutableStateOf(0f) }
@@ -82,6 +85,8 @@ internal fun AdPageView(
     val wDp = pixelsToDp(displaySize.width)
     val hDp = pixelsToDp(displaySize.height)
 
+    val weeklyAdViewModel: DigitalAdViewModel = viewModel()
+    //val logEnabled = weeklyAdViewModel.logEnabled
 
     LaunchedEffect(fileUrl) {
 
@@ -90,14 +95,17 @@ internal fun AdPageView(
 
 
         if (adPageId != null) {
-
+            Logger.i("[LOG]  Entered adPageId($adPageId) != null condition", saveLogs = null, sendToDB = false)
             try {
 
 
                 val adPageData: AdPage = weeklyAdService.getPageDetails(adId=adId, pageId = adPageId, location = location)
 
+                Logger.i("[API-LOG]  {adPageId: $adPageId} getPageDetails Api triggered...", saveLogs = null, sendToDB = false)
 
                 if (adPageData.contents.isNotEmpty()) {
+
+                    Logger.i("[LOG]  {adPageId: $adPageId} Entered adPageData.contents.isNotEmpty() condition.", saveLogs = null, sendToDB = false)
 
                     val request = ImageRequest.Builder(context)
                         .data(fileUrl)
@@ -131,18 +139,57 @@ internal fun AdPageView(
                         )
                     }
 
+                    val logData = SaveLogs(SaveLogDetails(
+                        adId = adId,
+                        loc = location,
+                        offerId = "",
+                        url = "",
+                        appDetails = "AOS:[API-LOG] [AdPageView.kt]  getPageDetails Api SUCCESS {adPageId: $adPageId}"
+                    ))
+                    Logger.i("[API-LOG] [AdPageView.kt]  getPageDetails Api SUCCESS {adPageId: $adPageId}", saveLogs = logData, sendToDB = saveLogEnabled)
+
                 }else{
                     println(" Noooo Hot Maps")
+
+                    val logData = SaveLogs(SaveLogDetails(
+                        adId = adId,
+                        loc = location,
+                        offerId = "",
+                        url = "",
+                        appDetails = "AOS:[API-LOG] [AdPageView.kt]  {adPageId: $adPageId} getPageDetails Api success but entered adPageData.contents.isEmpty() condition. NO Hot Maps"
+                    ))
+                    Logger.i("[API-LOG] [AdPageView.kt]  {adPageId: $adPageId} getPageDetails Api success but entered adPageData.contents.isEmpty() condition. NO Hot Maps", saveLogs = logData, sendToDB = saveLogEnabled
+)
+
                 }
 
             } catch (e: Exception) {
                 println("PAGE DETAILES Loading Failed")
                 println(e)
+
+                val logData = SaveLogs(SaveLogDetails(
+                    adId = adId,
+                    loc = location,
+                    offerId = "",
+                    url = "",
+                    appDetails = "AOS:[API-LOG]  getPageDetails Api FAILED. {adPageId: $adPageId}"
+                ))
+                Logger.e("[API-LOG]  getPageDetails Api FAILED. {adPageId: $adPageId}", saveLogs = logData, sendToDB = saveLogEnabled
+)
+
             }
 
 
         }else{
-
+            val logData = SaveLogs(SaveLogDetails(
+                adId = adId,
+                loc = location,
+                offerId = "",
+                url = "",
+                appDetails = "AOS:[LOG]  Entered adPageId = null condition."
+            ))
+            Logger.e("[LOG]  Entered adPageId = null condition.", saveLogs = logData, sendToDB = saveLogEnabled
+)
         }
 
 
@@ -152,7 +199,15 @@ internal fun AdPageView(
 
     val onHotMapClickHandler : suspend (selectedMapArea:MapArea) -> Unit = { selectedMapArea ->
 
-
+        val logData = SaveLogs(SaveLogDetails(
+            adId = adId,
+            loc = location,
+            offerId = "",
+            url = "",
+            appDetails = "AOS:[HOTMAP-LOG]  Tapped on Hot Map. => selectedMapArea : $selectedMapArea"
+        ))
+        Logger.i("[HOTMAP-LOG]  Tapped on Hot Map. => selectedMapArea : $selectedMapArea", saveLogs = logData, sendToDB = saveLogEnabled
+)
 
         try {
 
@@ -160,6 +215,15 @@ internal fun AdPageView(
 
             if (selectedMapArea.contentType?.lowercase() == "creative") {
 
+                val logData1 = SaveLogs(SaveLogDetails(
+                    adId = adId,
+                    loc = location,
+                    offerId = "",
+                    url = "",
+                    appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  selectedMapArea = $selectedMapArea"
+                ))
+                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  selectedMapArea = $selectedMapArea", saveLogs = logData1, sendToDB = saveLogEnabled
+)
 
                 var idVal = "0";
 
@@ -207,20 +271,57 @@ internal fun AdPageView(
                     promoEventName = peVal
                 )
 
-
-
+                Logger.i("[PAYLOAD] {Promo} $payload", saveLogs = null, sendToDB = false)
+                Logger.i("[PAYLOAD]  Promo details payload dispatched.", saveLogs = null, sendToDB = false)
                 onHotSpotClick(payload)
+
+                val logData2 = SaveLogs(SaveLogDetails(
+                    adId = adId,
+                    loc = location,
+                    offerId = "",
+                    url = "",
+                    appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  Payload dispatched : $payload"
+                ))
+                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  Calling savelogs Api...", saveLogs = logData2, sendToDB = saveLogEnabled
+)
+
             }else{
+
+                val logData1 = SaveLogs(SaveLogDetails(
+                    adId = adId,
+                    loc = location,
+                    offerId = "",
+                    url = "",
+                    appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Offer]  selectedMapArea = $selectedMapArea"
+                ))
+                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Offer]  selectedMapArea = $selectedMapArea", saveLogs = logData1, sendToDB = saveLogEnabled
+)
+
                 isOfferLoading = true
                 if (selectedMapArea.content?.offerVersionProductGroupId != null) {
+                    Logger.i("[HOTMAP-LOG]  Entered offerVersionProductGroupId != null condition", saveLogs = null, sendToDB = false)
+
                     val offerDetailsList = weeklyAdService.getOfferDetails(
                         adId,
                         selectedMapArea!!.content!!.offerVersionProductGroupId,
                         location = location
                     );
 
+                    Logger.i("[API-LOG]  {offerVersionProductGroupId = ${selectedMapArea!!.content!!.offerVersionProductGroupId} getOfferDetails Api triggered...", saveLogs = null, sendToDB = false)
+
+                    val logData = SaveLogs(SaveLogDetails(
+                        adId = adId,
+                        loc = location,
+                        offerId = "",
+                        url = "",
+                        appDetails = "AOS:[API-LOG] [AdPageView.kt :  onHotMapClickHandler > Offer]  getOfferDetails Api triggered... {offerVersionProductGroupId = ${selectedMapArea!!.content!!.offerVersionProductGroupId}"
+                    ))
+                    Logger.i("[API-LOG] [AdPageView.kt :  onHotMapClickHandler > Offer] getOfferDetails Api triggered... {offerVersionProductGroupId = ${selectedMapArea!!.content!!.offerVersionProductGroupId}", saveLogs = logData, sendToDB = saveLogEnabled
+)
 
                     if (offerDetailsList != null) {
+
+                        Logger.i("[HOTMAP-LOG]  Entered OfferDetailsList != null condition", saveLogs = null, sendToDB = false)
 
                         val resOfferDetails:OfferDetails = offerDetailsList
                         val payload = SpotClickPayload(
@@ -240,14 +341,51 @@ internal fun AdPageView(
                             appURL = resOfferDetails.appURL ?: ""
                         )
 
+                        Logger.i("[PAYLOAD] {Offer} $payload", saveLogs = null, sendToDB = false)
+                        Logger.i("[PAYLOAD]  Offer payload dispatched.", saveLogs = null, sendToDB = false)
                         onHotSpotClick(payload)
+
+                        val logData = SaveLogs(SaveLogDetails(
+                            adId = adId,
+                            loc = location,
+                            offerId = "",
+                            url = "",
+                            appDetails = "AOS:[HOTMAP-LOG] {Offer} Payload dispatched : $payload"
+                        ))
+                        Logger.i("[HOTMAP-LOG] {Offer} Payload dispatched : $payload", saveLogs = logData, sendToDB = saveLogEnabled
+)
+
                     }
+                }
+                else {
+                    val logData = SaveLogs(SaveLogDetails(
+                        adId = adId,
+                        loc = location,
+                        offerId = "",
+                        url = "",
+                        appDetails = "AOS:[LOG]  offerVersionProductGroupId == null for selectedMapArea : $selectedMapArea ;; [ getOfferDetails Api will not be triggered]."
+                    ))
+                    Logger.e("[LOG]  offerVersionProductGroupId == null for selectedMapArea : $selectedMapArea ;; [ getOfferDetails Api will not be triggered].", saveLogs = logData, sendToDB = saveLogEnabled
+)
                 }
             }
 
 
         }catch (e: Exception) {
             println("Error fetching offer details ${e.message}")
+
+            Logger.e("[LOG]  {onHotMapClickHandler > catch block} Error fetching offerDetails ${e.message}", saveLogs = null, sendToDB = false)
+
+            val logData = SaveLogs(SaveLogDetails(
+                adId = "",
+                loc = "",
+                offerId = "",
+                url = "",
+                appDetails = "AOS:[LOG]  {onHotMapClickHandler > catch block} Error : ${e.message} ; selectedMapArea = $selectedMapArea"
+            ))
+            Logger.e("[LOG]  {onHotMapClickHandler > catch block} Error : ${e.message} ; selectedMapArea = $selectedMapArea", saveLogs = logData, sendToDB = saveLogEnabled
+)
+
         }
         finally {
             isOfferLoading = false
@@ -359,8 +497,32 @@ internal fun AdPageView(
                 pageKey = key,
                 onMapAreaClick = {
                         it ->
+                    Logger.i("[DRAW-HOTMAP-LOG] {onMapAreaClick}", saveLogs = null, sendToDB = false)
+
+                    val logData = SaveLogs(SaveLogDetails(
+                        adId = "",
+                        loc = "",
+                        offerId = "",
+                        url = "",
+                        appDetails = "AOS:[DRAW-HOTMAP-LOG]  {onMapAreaClick} Entered DrawHotMaps."
+                    ))
+                    Logger.i("[DRAW-HOTMAP-LOG]  {onMapAreaClick} Entered DrawHotMaps.", saveLogs = logData, sendToDB = saveLogEnabled
+)
+
                     coroutineScope.launch {
+
                         onHotMapClickHandler.invoke(it)
+
+                        val logData = SaveLogs(SaveLogDetails(
+                            adId = "",
+                            loc = "",
+                            offerId = "",
+                            url = "",
+                            appDetails = "AOS:[DRAW-HOTMAP-LOG]  {onMapAreaClick} HANDLER INVOKED."
+                        ))
+                        Logger.i("[DRAW-HOTMAP-LOG]  {onMapAreaClick} HANDLER INVOKED.", saveLogs = logData, sendToDB = saveLogEnabled
+)
+
                     }
 
 //                    if (it.contentType?.lowercase() == "creative") {

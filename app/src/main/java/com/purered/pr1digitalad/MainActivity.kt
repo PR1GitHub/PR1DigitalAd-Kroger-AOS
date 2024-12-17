@@ -1,6 +1,7 @@
 package com.purered.pr1digitalad
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -62,22 +63,41 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 fun WeeklyAdScreen(
     modifier: Modifier = Modifier) {
 
+    // PROD
+    var adId_12 = "0614c2fb-3279-4044-8d45-21faf406bd71"
+    var locId_12 = "02100537"
+
+    var adId_14 = "a2010c61-380c-49d4-acdd-28fe2b3c519b"
+    var locId_14 = "01100002"
+
+    var adId_15 = "eb114a9f-7856-4364-9d81-7ebe7356e603"
+    var locId_15 = "01100002"
+
+    var adId_16 = "3b52262f-8168-4815-8d91-14408edf69d2"
+    var locId_16 = "01100002"
+    // QA
+    var adId_13 = "2d2514de-bd6c-42b7-aacd-43e1ac19bf1d"
+    var locId_13 = "01600128"
+
+    var stagingKey = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2"
+    var prodKey = "bqwwosbzrzcvffztxzyczieljzsahmkp"
 
     DigitalAd(
-        adId = "8d7d7bfd-9dd1-4738-b98f-cb1ec10e3026",
-        location =  "01800775",
-        apiEnv = ApiEnv.PROD,
-        apiKey = "bqwwosbzrzcvffztxzyczieljzsahmkp",
+        adId = adId_13,
+        location = locId_13,
+        apiEnv = ApiEnv.QA,
+        apiKey = stagingKey,
+//        apiEnv = ApiEnv.PROD,
+//        apiKey = prodKey,
         onHotSpotClick = {  payload:SpotClickPayload ->
-
-
-
             if (payload.itemType == "promo") {
                 // Handle content type Creative
+                Log.d("Promo Payload -->", payload.toString());
             }
 
             if (payload.itemType == "offer") {
                 // Handle content type Offer
+                Log.d("Offer Payload -->", payload.toString());
             }
         })
 
