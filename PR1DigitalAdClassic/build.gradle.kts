@@ -50,6 +50,15 @@ publishing{
     publications{
         create<MavenPublication>("release"){
 
+            pom {
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        distribution.set("repo")
+                    }
+                }
+            }
 
             afterEvaluate {
                 from(components.findByName("release"))
