@@ -64,7 +64,7 @@ publishing{
                 from(components.findByName("release"))
                 groupId = "com.purered.pr1digitaladclassic"
                 artifactId = "pr1digitaladclassic"
-                version = "0.0.5"
+                version = "0.0.6"
 
                 //com.purered.pr1digitaladclassic:pr1digitaladclassic:0.0.4
             }

@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.util.Log
 
-val DigitalAdLibVersion = "0.0.5" // This is the version of the DigitalAd library
+val DigitalAdLibVersion = "0.0.6" // This is the version of the DigitalAd library
 
 
 
