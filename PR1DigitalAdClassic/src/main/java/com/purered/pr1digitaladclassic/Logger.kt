@@ -20,7 +20,7 @@ object Logger {
             Log.d(tagStr, message)
             //saveLogToDB(saveLogs)
         }
-        if (sendToDB) { saveLogToDB(saveLogs) }
+        //if (sendToDB) { saveLogToDB(saveLogs) }
     }
 
     fun e(message: String, throwable: Throwable? = null, saveLogs: SaveLogs?, sendToDB: Boolean) {
@@ -29,7 +29,7 @@ object Logger {
             //saveLogToDB(saveLogs)
         }
         //Log.d("[SDK-PARAMS]","fun e : sendToDB = $sendToDB")
-        if (sendToDB) { saveLogToDB(saveLogs) }
+        //if (sendToDB) { saveLogToDB(saveLogs) }
     }
 
     fun i(message: String, saveLogs: SaveLogs?, sendToDB: Boolean) {
@@ -38,7 +38,7 @@ object Logger {
             //saveLogToDB(saveLogs)
         }
         //Log.d("[SDK-PARAMS]","fun i : sendToDB = $sendToDB")
-        if (sendToDB) { saveLogToDB(saveLogs) }
+        //if (sendToDB) { saveLogToDB(saveLogs) }
     }
 
     // Add similar methods for `Log.w`, `Log.v`, etc., if needed.

@@ -5,6 +5,9 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -17,6 +20,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Close
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -34,6 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.changedToDown
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
@@ -43,6 +49,7 @@ import coil.request.SuccessResult
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import coil.imageLoader
 import kotlin.math.floor
@@ -206,8 +213,7 @@ internal fun AdPageView(
             url = "",
             appDetails = "AOS:[HOTMAP-LOG]  Tapped on Hot Map. => selectedMapArea : $selectedMapArea"
         ))
-        Logger.i("[HOTMAP-LOG]  Tapped on Hot Map. => selectedMapArea : $selectedMapArea", saveLogs = logData, sendToDB = saveLogEnabled
-)
+        Logger.i("[HOTMAP-LOG]  Tapped on Hot Map. => selectedMapArea : $selectedMapArea", saveLogs = logData, sendToDB = saveLogEnabled)
 
         try {
 
@@ -222,8 +228,7 @@ internal fun AdPageView(
                     url = "",
                     appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  selectedMapArea = $selectedMapArea"
                 ))
-                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  selectedMapArea = $selectedMapArea", saveLogs = logData1, sendToDB = saveLogEnabled
-)
+                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  selectedMapArea = $selectedMapArea", saveLogs = logData1, sendToDB = saveLogEnabled)
 
                 var idVal = "0";
 
@@ -282,8 +287,7 @@ internal fun AdPageView(
                     url = "",
                     appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  Payload dispatched : $payload"
                 ))
-                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  Calling savelogs Api...", saveLogs = logData2, sendToDB = saveLogEnabled
-)
+                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  Calling savelogs Api...", saveLogs = logData2, sendToDB = saveLogEnabled)
 
             }else{
 
@@ -294,8 +298,7 @@ internal fun AdPageView(
                     url = "",
                     appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Offer]  selectedMapArea = $selectedMapArea"
                 ))
-                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Offer]  selectedMapArea = $selectedMapArea", saveLogs = logData1, sendToDB = saveLogEnabled
-)
+                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Offer]  selectedMapArea = $selectedMapArea", saveLogs = logData1, sendToDB = saveLogEnabled)
 
                 isOfferLoading = true
                 if (selectedMapArea.content?.offerVersionProductGroupId != null) {
@@ -316,8 +319,7 @@ internal fun AdPageView(
                         url = "",
                         appDetails = "AOS:[API-LOG] [AdPageView.kt :  onHotMapClickHandler > Offer]  getOfferDetails Api triggered... {offerVersionProductGroupId = ${selectedMapArea!!.content!!.offerVersionProductGroupId}"
                     ))
-                    Logger.i("[API-LOG] [AdPageView.kt :  onHotMapClickHandler > Offer] getOfferDetails Api triggered... {offerVersionProductGroupId = ${selectedMapArea!!.content!!.offerVersionProductGroupId}", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                    Logger.i("[API-LOG] [AdPageView.kt :  onHotMapClickHandler > Offer] getOfferDetails Api triggered... {offerVersionProductGroupId = ${selectedMapArea!!.content!!.offerVersionProductGroupId}", saveLogs = logData, sendToDB = saveLogEnabled)
 
                     if (offerDetailsList != null) {
 
@@ -352,8 +354,7 @@ internal fun AdPageView(
                             url = "",
                             appDetails = "AOS:[HOTMAP-LOG] {Offer} Payload dispatched : $payload"
                         ))
-                        Logger.i("[HOTMAP-LOG] {Offer} Payload dispatched : $payload", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                        Logger.i("[HOTMAP-LOG] {Offer} Payload dispatched : $payload", saveLogs = logData, sendToDB = saveLogEnabled)
 
                     }
                 }
@@ -365,8 +366,7 @@ internal fun AdPageView(
                         url = "",
                         appDetails = "AOS:[LOG]  offerVersionProductGroupId == null for selectedMapArea : $selectedMapArea ;; [ getOfferDetails Api will not be triggered]."
                     ))
-                    Logger.e("[LOG]  offerVersionProductGroupId == null for selectedMapArea : $selectedMapArea ;; [ getOfferDetails Api will not be triggered].", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                    Logger.e("[LOG]  offerVersionProductGroupId == null for selectedMapArea : $selectedMapArea ;; [ getOfferDetails Api will not be triggered].", saveLogs = logData, sendToDB = saveLogEnabled)
                 }
             }
 
@@ -383,8 +383,7 @@ internal fun AdPageView(
                 url = "",
                 appDetails = "AOS:[LOG]  {onHotMapClickHandler > catch block} Error : ${e.message} ; selectedMapArea = $selectedMapArea"
             ))
-            Logger.e("[LOG]  {onHotMapClickHandler > catch block} Error : ${e.message} ; selectedMapArea = $selectedMapArea", saveLogs = logData, sendToDB = saveLogEnabled
-)
+            Logger.e("[LOG]  {onHotMapClickHandler > catch block} Error : ${e.message} ; selectedMapArea = $selectedMapArea", saveLogs = logData, sendToDB = saveLogEnabled)
 
         }
         finally {
@@ -393,39 +392,6 @@ internal fun AdPageView(
 
 
     }
-
-
-
-//    val loadOfferDetails: suspend (selectedMapArea:MapArea) -> Unit =  { selectedMapArea ->
-//
-//        try {
-//
-//            if (selectedMapArea?.content?.offerVersionProductGroupId != null) {
-//                val offerDetailsList = weeklyAdService.getOfferDetails(
-//                    eventId,
-//                    selectedMapArea!!.content!!.offerVersionProductGroupId.toInt()
-//                );
-//                if (offerDetailsList.isNotEmpty()) {
-//                    offerDetails = offerDetailsList[0]
-//                }
-//            }
-//
-//        } catch (
-//            e: Exception
-//        ) {
-//            Toast.makeText(
-//                context,
-//                "",
-//                Toast.LENGTH_LONG
-//            ).show()
-//
-//            println("Error fetching offer details ${e.message}")
-//        }finally {
-//            isOfferLoading = false
-//        }
-//    }
-
-    // val painter = rememberAsyncImagePainter(model = fileUrl)
 
     Box(
         modifier = modifier
@@ -447,25 +413,6 @@ internal fun AdPageView(
             )
         }
 
-//        SubcomposeAsyncImage(
-//            model = fileUrl,
-//            contentDescription = null,
-//            loading = {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(440.dp)
-//                        .padding(horizontal = Dimens.MediumPadding1)
-//                        .shimmerEffect()
-//                )
-//            },
-//
-//            error = { BasicText(text = "Error loading image") },
-//
-//            contentScale = ContentScale.Fit,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//        )
         if(imageState == "error"){
             BasicText(text = "Error loading Page")
         }
@@ -506,8 +453,7 @@ internal fun AdPageView(
                         url = "",
                         appDetails = "AOS:[DRAW-HOTMAP-LOG]  {onMapAreaClick} Entered DrawHotMaps."
                     ))
-                    Logger.i("[DRAW-HOTMAP-LOG]  {onMapAreaClick} Entered DrawHotMaps.", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                    Logger.i("[DRAW-HOTMAP-LOG]  {onMapAreaClick} Entered DrawHotMaps.", saveLogs = logData, sendToDB = saveLogEnabled)
 
                     coroutineScope.launch {
 
@@ -520,27 +466,9 @@ internal fun AdPageView(
                             url = "",
                             appDetails = "AOS:[DRAW-HOTMAP-LOG]  {onMapAreaClick} HANDLER INVOKED."
                         ))
-                        Logger.i("[DRAW-HOTMAP-LOG]  {onMapAreaClick} HANDLER INVOKED.", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                        Logger.i("[DRAW-HOTMAP-LOG]  {onMapAreaClick} HANDLER INVOKED.", saveLogs = logData, sendToDB = saveLogEnabled)
 
                     }
-
-//                    if (it.contentType?.lowercase() == "creative") {
-//                        Toast.makeText(
-//                            context,
-//                            "Clicked on Creative spot will be redirected to ${it.content?.webUrl}",
-//                            Toast.LENGTH_LONG
-//                        ).show()
-//                    } else {
-//                        isOfferLoading = true
-//                        coroutineScope.launch {
-//                            loadOfferDetails.invoke(it)
-//                        }
-//
-//
-//
-//                        //isPopupVisible = true
-//                    }
 
                 }
             )
@@ -560,55 +488,6 @@ internal fun AdPageView(
                 )
             }
         }
-
-//{ offerDetails = null }
-//        if (offerDetails != null) {
-//            AlertDialog(
-//                modifier = Modifier.wrapContentHeight(),
-//                onDismissRequest = { offerDetails = null },
-//                title = {
-//                    Row(
-//                        modifier = Modifier
-//                            .fillMaxWidth() ,
-//                        horizontalArrangement = Arrangement.SpaceBetween,
-//                        verticalAlignment = Alignment.CenterVertically // Center align the content vertically
-//                    ) {
-//                        Text(
-//                            text = "Offer Details",
-//                            style = MaterialTheme.typography.titleMedium
-//                        )
-//                        IconButton(onClick = { offerDetails = null }) {
-//                            Icon(
-//                                imageVector = Icons.Sharp.Close,
-//                                contentDescription = "Close"
-//                            )
-//                        }
-//                    }
-//                },
-//                text = {
-//                    Box(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .wrapContentHeight()
-//                    ) {
-//
-//                        if(offerDetails != null) {
-//                            MapAreaContentView(
-//                                modifier = Modifier,
-//                                offerDetails = offerDetails!!,
-//                                eventId = eventId
-//                            ) {
-//                                offerDetails = null
-//                            }
-//                        }
-//                    }
-//                },
-//                confirmButton = { }
-//            )
-//        }
-
-
-
 
 
     }
@@ -642,7 +521,7 @@ private fun DrawHotMaps(
         modifier = Modifier
             .width(wDp)
             .height(hDp)
-            //.border(2.dp, Color.Black)
+//            .border(2.dp, Color.Black)
             .background(Color.Transparent)
     ) {
         hotMaps.forEach { mapArea ->
@@ -651,21 +530,148 @@ private fun DrawHotMaps(
             val right = floor(mapArea.x2).dp
             val bottom = floor(mapArea.y2).dp
 //Color.LightGray.copy(alpha = 0.4f)
+            val interactionSource = remember { MutableInteractionSource() }
             Box(
                 modifier = Modifier
                     .offset(x = left, y = top)
                     .width(right - left)
                     .height(bottom - top)
                     .background(Color.Transparent)
-                    .border(1.dp, Color.Transparent)
-                    .clickable {
-                        onMapAreaClick(mapArea)
+                    //.border(1.dp, Color.Transparent)
+                    .border(1.dp, Color.Red)
+//                    .clickable {
+//                        onMapAreaClick(mapArea)
+//                    }
+
+//                    /* -- Trail - 0 --
+//                    .pointerInput(Unit) {
+//                        awaitPointerEventScope {
+//                            while (true) {
+//                                val event = awaitPointerEvent()
+//                                if (event.changes.any { it.changedToDown() }) {
+//                                    onMapAreaClick(mapArea)
+//                                }
+//                            }
+//                        }
+//                     }
+//                    */
+
+                    /* -- Using double-tap for hotmap --
+                    .pointerInput(Unit) {
+                        var lastTapTime = 0L
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val currentTime = System.currentTimeMillis()
+
+                                // Detecting a multi-touch event
+                                if (event.changes.count { it.changedToDown() } >= 2) {
+                                    // Check if this tap is within a short time frame (e.g., 300 ms)
+                                    if (currentTime - lastTapTime < 300) {
+                                        onMapAreaClick(mapArea)  // Trigger on double-tap
+                                    }
+                                    lastTapTime = currentTime
+                                }
+                            }
+                        }
                     }
+                    */
+
+//                    /* -- Gestures with Delay -- Trail - 2
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+
+                                // Detect initial touch
+                                val downCount = event.changes.count { it.changedToDown() }
+
+                                if (downCount == 1) {
+                                    // Record the initial time
+                                    val startTime = System.nanoTime()
+
+                                    // Wait and check for additional touches
+                                    var stillSingleTouch = true
+                                    while (System.nanoTime() - startTime < 200_000_000L) { // 200ms in nanoseconds
+                                        val nextEvent = awaitPointerEvent()
+                                        val activeTouches = nextEvent.changes.count { it.pressed }
+
+                                        if (activeTouches > 1) {
+                                            stillSingleTouch = false
+                                            break
+                                        }
+                                    }
+
+                                    // If no additional touches were detected, trigger the method
+                                    if (stillSingleTouch) {
+                                        onMapAreaClick(mapArea)
+                                    }
+
+                                    // Consume the pointer event to prevent lingering state
+                                    event.changes.forEach { it.consume() }
+                                } else if (downCount > 1) {
+                                    // Consume multi-touch events immediately
+                                    event.changes.forEach { it.consume() }
+                                }
+                            }
+                        }
+                    }
+
+                    /* -- Gestures with Delay -- Trail - 1
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                Log.i("GESTURES","Entered while loop")
+                                // Detect initial touch
+                                val downCount = event.changes.count { it.changedToDown() }
+                                Log.i("GESTURES","downCount = $downCount")
+                                if (downCount == 1) {
+                                    // Record the initial time
+                                    val startTime = System.currentTimeMillis()
+                                    Log.i("GESTURES","startTime = $startTime")
+                                    // Wait and check for additional touches in a loop
+                                    var stillSingleTouch = true
+                                    Log.i("GESTURES","stillSingleTouch = $stillSingleTouch")
+                                    while (System.currentTimeMillis() - startTime < 200) { // 200ms delay
+                                        Log.i("GESTURES","Time difference = ${System.currentTimeMillis() - startTime}")
+                                        Log.i("GESTURES","Entered time delay while loop")
+                                        val nextEvent = awaitPointerEvent()
+                                        val activeTouches = nextEvent.changes.count { it.pressed }
+                                        Log.i("GESTURES","activeTouches = $activeTouches")
+                                        if (activeTouches > 1) {
+                                            Log.i("GESTURES","Entered activeTouches > 1 condition")
+                                            stillSingleTouch = false
+                                            Log.i("GESTURES","stillSingleTouch = $stillSingleTouch")
+                                            break
+                                        }
+                                    }
+
+                                    // If no additional touches were detected, trigger the method
+                                    if (stillSingleTouch) {
+                                        Log.i("GESTURES","No additional touches detected")
+                                        Log.i("GESTURES","Triggering onMapAreaClick(mapArea) method")
+                                        onMapAreaClick(mapArea)
+                                    }
+
+                                    // Consume the pointer event to prevent lingering state
+                                    event.changes.forEach { it.consume() }
+                                } else if (downCount > 1) {
+                                    // Consume multi-touch events immediately
+                                    Log.i("GESTURES","Entered downCount > 1 condition")
+                                    event.changes.forEach { it.consume() }
+                                }
+                            }
+                        }
+                    }
+//                    */
+
+
             ) {
                 // Optionally, you can add content to each Box here, like labels or icons
 //                Text(
-//                    text = "Area",
-//                    color = Color.White,
+//                    text = "Hot Map",
+//                    color = Color.Red,
 //                    fontSize = 14.sp,
 //                    modifier = Modifier.align(Alignment.Center)
 //                )

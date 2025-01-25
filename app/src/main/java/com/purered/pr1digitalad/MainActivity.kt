@@ -34,15 +34,18 @@ import com.purered.pr1digitaladclassic.ApiEnv
 import com.purered.pr1digitaladclassic.DigitalAd
 import com.purered.pr1digitaladclassic.SpotClickPayload
 
+import android.app.AlertDialog
+import android.content.Context
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        //enableEdgeToEdge()
         setContent {
             PR1DigitalAdTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     WeeklyAdScreen(
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding), this
                     )
                 }
             }
@@ -61,7 +64,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun WeeklyAdScreen(
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier,context: Context) {
 
     // PROD
     var adId_12 = "0614c2fb-3279-4044-8d45-21faf406bd71"
@@ -75,6 +78,10 @@ fun WeeklyAdScreen(
 
     var adId_16 = "3b52262f-8168-4815-8d91-14408edf69d2"
     var locId_16 = "01100002"
+
+    var adId_17 = "9AA728AE-EFBC-4B5E-9473-462FF5094F21"
+    var locId_17 = "01100352"
+
     // QA
     var adId_13 = "2d2514de-bd6c-42b7-aacd-43e1ac19bf1d"
     var locId_13 = "01600128"
@@ -83,13 +90,23 @@ fun WeeklyAdScreen(
     var prodKey = "bqwwosbzrzcvffztxzyczieljzsahmkp"
 
     DigitalAd(
-        adId = adId_13,
-        location = locId_13,
-        apiEnv = ApiEnv.QA,
-        apiKey = stagingKey,
-//        apiEnv = ApiEnv.PROD,
-//        apiKey = prodKey,
+        adId = adId_17,
+        location = locId_17,
+//        apiEnv = ApiEnv.QA,
+//        apiKey = stagingKey,
+        apiEnv = ApiEnv.PROD,
+        apiKey = prodKey,
         onHotSpotClick = {  payload:SpotClickPayload ->
+
+            /*
+            AlertDialog.Builder(context)
+                .setTitle("Kroger Alert")
+                .setMessage(payload.toString())
+                .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                .create()
+                .show()
+             */
+
             if (payload.itemType == "promo") {
                 // Handle content type Creative
                 Log.d("Promo Payload -->", payload.toString());

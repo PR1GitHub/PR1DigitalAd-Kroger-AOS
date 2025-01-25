@@ -1,9 +1,9 @@
 package com.purered.pr1digitaladclassic
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.IntSize
 import kotlin.math.absoluteValue
 
 @Composable
-fun ZoomableBoxContent(
+fun ZoomableBoxContent3(
     content: @Composable () -> Unit
 ) {
     var scale by remember { mutableStateOf(1f) }
@@ -34,6 +34,7 @@ fun ZoomableBoxContent(
             .background(Color.White)
             .pointerInput(Unit) {
                 detectTransformGestures { _, pan, zoom, _ ->
+                    // Allow zooming regardless of hot map area
                     scale = (scale * zoom).coerceIn(1f, 5f)
 
                     val extraWidth = (scale - 1) * boxSize.width
@@ -65,6 +66,13 @@ fun ZoomableBoxContent(
                 .fillMaxSize()
                 .pointerInput(Unit) {
                     detectTapGestures(
+                        onTap = { offset ->
+                            // Check if the tap is within a hot map area
+                            //if (!isTapOnHotMap(offset)) {
+                                // Handle tap if not on hot map
+                            //}
+                            Log.i("ZoomableBoxContent", "Tap is within hotmap area...")
+                        },
                         onDoubleTap = {
                             scale = 1f
                             offset = Offset.Zero
@@ -72,8 +80,12 @@ fun ZoomableBoxContent(
                     )
                 }
         ) {
-            // Replace with your composable content inside the Box
             content()
         }
     }
 }
+
+//private fun isTapOnHotMap(tapOffset: Offset): Boolean {
+//    // Implement logic to check if the tap is within any hot map area
+//    // Return true if it is, false otherwise
+//}
