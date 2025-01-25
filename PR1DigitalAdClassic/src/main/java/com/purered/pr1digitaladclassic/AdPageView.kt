@@ -64,7 +64,8 @@ internal fun AdPageView(
     location:String,
     onHotSpotClick: ( payload:SpotClickPayload) -> Unit,
     key: Int,
-    saveLogEnabled: Boolean
+    saveLogEnabled: Boolean,
+    zoomState:ZoomState?
 ) {
     var imageWidth by remember { mutableStateOf(0f) }
     var imageHeight by remember { mutableStateOf(0f) }
@@ -436,7 +437,6 @@ internal fun AdPageView(
 
             //  println(" DrawHotMaps DrawHotMaps DrawHotMaps DrawHotMaps")
 
-
             DrawHotMaps(
                 hotMaps = convertedHotMaps,
                 width = displaySize.width,
@@ -470,7 +470,8 @@ internal fun AdPageView(
 
                     }
 
-                }
+                },
+                zoomState
             )
         }
 
@@ -507,7 +508,8 @@ private fun DrawHotMaps(
     width: Float,
     height: Float,
     pageKey: Int,
-    onMapAreaClick: ((MapArea) -> Unit)
+    onMapAreaClick: ((MapArea) -> Unit),
+    zoomState: ZoomState?
 ) {
     if (hotMaps.isEmpty()) {
         return
@@ -539,132 +541,27 @@ private fun DrawHotMaps(
                     .background(Color.Transparent)
                     //.border(1.dp, Color.Transparent)
                     .border(1.dp, Color.Red)
-//                    .clickable {
-//                        onMapAreaClick(mapArea)
-//                    }
-
-//                    /* -- Trail - 0 --
+                    .clickable {
+                        Log.i("HOTMAP > End","onMapAreaClick triggered")
+                        onMapAreaClick(mapArea)
+                    }
+//
 //                    .pointerInput(Unit) {
-//                        awaitPointerEventScope {
-//                            while (true) {
-//                                val event = awaitPointerEvent()
-//                                if (event.changes.any { it.changedToDown() }) {
-//                                    onMapAreaClick(mapArea)
-//                                }
+//                        Log.i("HOTMAP > pointerInput","pointerInput triggered")
+//                        detectTapGestures(
+//                            onTap = {
+//                                Log.i("HOTMAP > detectTapGestures","detectTapGestures triggered")
+//                                //onMapAreaClick(mapArea)
+//
+//                                Log.i("HOTMAP > Start","onMapAreaClick triggered")
+//
+//                                println(zoomState)
+//
+//                                Log.i("HOTMAP > End","onMapAreaClick triggered")
+//                                return@detectTapGestures
 //                            }
-//                        }
-//                     }
-//                    */
-
-                    /* -- Using double-tap for hotmap --
-                    .pointerInput(Unit) {
-                        var lastTapTime = 0L
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                val currentTime = System.currentTimeMillis()
-
-                                // Detecting a multi-touch event
-                                if (event.changes.count { it.changedToDown() } >= 2) {
-                                    // Check if this tap is within a short time frame (e.g., 300 ms)
-                                    if (currentTime - lastTapTime < 300) {
-                                        onMapAreaClick(mapArea)  // Trigger on double-tap
-                                    }
-                                    lastTapTime = currentTime
-                                }
-                            }
-                        }
-                    }
-                    */
-
-//                    /* -- Gestures with Delay -- Trail - 2
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-
-                                // Detect initial touch
-                                val downCount = event.changes.count { it.changedToDown() }
-
-                                if (downCount == 1) {
-                                    // Record the initial time
-                                    val startTime = System.nanoTime()
-
-                                    // Wait and check for additional touches
-                                    var stillSingleTouch = true
-                                    while (System.nanoTime() - startTime < 200_000_000L) { // 200ms in nanoseconds
-                                        val nextEvent = awaitPointerEvent()
-                                        val activeTouches = nextEvent.changes.count { it.pressed }
-
-                                        if (activeTouches > 1) {
-                                            stillSingleTouch = false
-                                            break
-                                        }
-                                    }
-
-                                    // If no additional touches were detected, trigger the method
-                                    if (stillSingleTouch) {
-                                        onMapAreaClick(mapArea)
-                                    }
-
-                                    // Consume the pointer event to prevent lingering state
-                                    event.changes.forEach { it.consume() }
-                                } else if (downCount > 1) {
-                                    // Consume multi-touch events immediately
-                                    event.changes.forEach { it.consume() }
-                                }
-                            }
-                        }
-                    }
-
-                    /* -- Gestures with Delay -- Trail - 1
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                Log.i("GESTURES","Entered while loop")
-                                // Detect initial touch
-                                val downCount = event.changes.count { it.changedToDown() }
-                                Log.i("GESTURES","downCount = $downCount")
-                                if (downCount == 1) {
-                                    // Record the initial time
-                                    val startTime = System.currentTimeMillis()
-                                    Log.i("GESTURES","startTime = $startTime")
-                                    // Wait and check for additional touches in a loop
-                                    var stillSingleTouch = true
-                                    Log.i("GESTURES","stillSingleTouch = $stillSingleTouch")
-                                    while (System.currentTimeMillis() - startTime < 200) { // 200ms delay
-                                        Log.i("GESTURES","Time difference = ${System.currentTimeMillis() - startTime}")
-                                        Log.i("GESTURES","Entered time delay while loop")
-                                        val nextEvent = awaitPointerEvent()
-                                        val activeTouches = nextEvent.changes.count { it.pressed }
-                                        Log.i("GESTURES","activeTouches = $activeTouches")
-                                        if (activeTouches > 1) {
-                                            Log.i("GESTURES","Entered activeTouches > 1 condition")
-                                            stillSingleTouch = false
-                                            Log.i("GESTURES","stillSingleTouch = $stillSingleTouch")
-                                            break
-                                        }
-                                    }
-
-                                    // If no additional touches were detected, trigger the method
-                                    if (stillSingleTouch) {
-                                        Log.i("GESTURES","No additional touches detected")
-                                        Log.i("GESTURES","Triggering onMapAreaClick(mapArea) method")
-                                        onMapAreaClick(mapArea)
-                                    }
-
-                                    // Consume the pointer event to prevent lingering state
-                                    event.changes.forEach { it.consume() }
-                                } else if (downCount > 1) {
-                                    // Consume multi-touch events immediately
-                                    Log.i("GESTURES","Entered downCount > 1 condition")
-                                    event.changes.forEach { it.consume() }
-                                }
-                            }
-                        }
-                    }
-//                    */
+//                        )
+//                    }
 
 
             ) {

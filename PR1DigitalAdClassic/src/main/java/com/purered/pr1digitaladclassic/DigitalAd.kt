@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFromBaseline
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -126,12 +128,16 @@ fun DigitalAd(
                         appDetails = "AOS:[LOG] [DigitalAd.kt]  WeeklyAd data fetched. {adId: $adId, location: $location}"
                     ))
                     Logger.i("[LOG] [DigitalAd.kt]  WeeklyAd data fetched. {adId: $adId, location: $location}", saveLogs = logData, sendToDB = ad.isLogEnabled)
-
+                    val zoomState = remember { ZoomState() }
 
                     Box(modifier = Modifier.fillMaxSize()
                     ) {
 
-                        ZoomableBoxContent {
+                        //ZoomableBoxContent { // Initially used zoomableBoxClass
+                            /* -- Initial code --
+                            ZoomableBoxContent11 (
+                                zoomState = zoomState
+                            ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -149,6 +155,7 @@ fun DigitalAd(
                                             onHotSpotClick = onHotSpotClick,
                                             key = index,
                                             saveLogEnabled = false, //ad.isLogEnabled
+                                            zoomState = zoomState
                                         )
                                 }
 
@@ -163,7 +170,32 @@ fun DigitalAd(
 
                             }
                         }
+                        */
 
+                        ZoomableBoxContent11(
+                            zoomState = zoomState
+                        ) {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                itemsIndexed(ad.pages) { index, adPage ->
+                                    // Render each AdPage
+                                    if (adPage.fileURL.isNotEmpty()) {
+                                        AdPageView(
+                                            adPage = adPage,
+                                            modifier = Modifier,
+                                            adId = adId,
+                                            location = location,
+                                            onHotSpotClick = onHotSpotClick,
+                                            key = index,
+                                            saveLogEnabled = false, // ad.isLogEnabled
+                                            zoomState = zoomState
+                                        )
+                                    }
+                                }
+
+                            }
+                        }
                     }
                 }
             }
