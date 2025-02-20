@@ -17,9 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.util.Log
 
-val DigitalAdLibVersion = "0.0.6" // This is the version of the DigitalAd library
-
-
+val DigitalAdLibVersion = "0.0.7" // This is the version of the DigitalAd library
 
 data class SpotClickPayload(
     val itemType: String,
@@ -49,29 +47,17 @@ fun DigitalAd(
     onHotSpotClick: ( payload:SpotClickPayload) -> Unit
 ) {
 
-
     weeklyAdService = createWeeklyAdService(apiEnv,apiKey)
-    //Log.d("PR1DigitalAd-AOS-SDK", "LOG --> createWeeklyAdService() triggered...");
 
     val mode = "public"
     val weeklyAdViewModel: DigitalAdViewModel = viewModel()
     val viewState by weeklyAdViewModel.digitalAdState
 
-    // Enable or disable logging
-    Logger.isLoggingEnabled = true // Set to `false` to disable logs globally
+    // Enable or disable local logging
+    Logger.isLoggingEnabled = true // Set to `false` to disable local logs globally
 
     LaunchedEffect(Unit) {
-        //weeklyAdViewModel.fetchWeeklyAd(eventId, mode)
         weeklyAdViewModel.fetchAdDetails(adId,location)
-
-        val logData = SaveLogs(SaveLogDetails(
-            adId = adId,
-            loc = location,
-            offerId = "",
-            url = "",
-            appDetails = "AOS:[API-LOG] [DigitalAd.kt]  Calling fetchAdDetails()... {adId: $adId, location: $location}"
-        ))
-        Logger.i("[API-LOG] [DigitalAd.kt]  Calling fetchAdDetails()... {adId: $adId, location: $location}", saveLogs = logData, sendToDB = false)
     }
     Box(modifier = Modifier.fillMaxSize()) {
         when {
@@ -91,13 +77,10 @@ fun DigitalAd(
                 }
 
                 val logData = SaveLogs(SaveLogDetails(
-                    adId = adId,
-                    loc = location,
-                    offerId = "",
-                    url = "",
+                    adId = adId, loc = location,
                     appDetails = "AOS:[LOG] [DigitalAd.kt]  Something went wrong. Please try again. {adId: $adId, location: $location}"
                 ))
-                Logger.e("[LOG] [DigitalAd.kt]  Something went wrong. Please try again. {adId: $adId, location: $location}", saveLogs = logData, sendToDB = false)
+                Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = true)
             }
             else -> {
                 if(viewState.WeeklyAd != null) {
@@ -106,18 +89,14 @@ fun DigitalAd(
                     val ad = viewState.WeeklyAd!!;
 
                     val logData = SaveLogs(SaveLogDetails(
-                        adId = adId,
-                        loc = location,
-                        offerId = "",
-                        url = "",
+                        adId = adId, loc = location,
                         appDetails = "AOS:[LOG] [DigitalAd.kt]  WeeklyAd data fetched. {adId: $adId, location: $location}"
                     ))
-                    Logger.i("[LOG] [DigitalAd.kt]  WeeklyAd data fetched. {adId: $adId, location: $location}", saveLogs = logData, sendToDB = ad.isLogEnabled)
+                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = ad.isLogEnabled)
 
 
                     Box(modifier = Modifier.fillMaxSize()
                     ) {
-
 
                         ZoomableBoxContent {
                             Column(
@@ -127,8 +106,6 @@ fun DigitalAd(
                             ) {
                                 // Add verticalScroll modifier
                                 ad.pages.forEachIndexed { index, adPage ->
-
-
                                     // Pass each AdPage to a separate AdPageView
                                     if(adPage.fileURL.isNotEmpty() == true)
                                         AdPageView(
@@ -143,20 +120,17 @@ fun DigitalAd(
                                 }
 
                                 val logData = SaveLogs(SaveLogDetails(
-                                    adId = adId,
-                                    loc = location,
-                                    offerId = "",
-                                    url = "",
+                                    adId = adId, loc = location,
                                     appDetails = "AOS:[LOG] [DigitalAd.kt]  Generating AdPageView... {adId: $adId, location: $location}"
                                 ))
-                                Logger.i("[LOG] [DigitalAd.kt] Generating AdPageView... {adId: $adId, location: $location}", saveLogs = logData, sendToDB = ad.isLogEnabled)
+                                Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = ad.isLogEnabled)
                             }
                         }
                     }
                 }
             }
+
         }
     }
-
 
 }

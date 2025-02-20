@@ -32,6 +32,7 @@ import com.purered.pr1digitaladclassic.ApiEnv
 
 
 import com.purered.pr1digitaladclassic.DigitalAd
+import com.purered.pr1digitaladclassic.DigitalAdLibVersion
 import com.purered.pr1digitaladclassic.SpotClickPayload
 
 class MainActivity : ComponentActivity() {
@@ -75,6 +76,32 @@ fun WeeklyAdScreen(
 
     var adId_16 = "3b52262f-8168-4815-8d91-14408edf69d2"
     var locId_16 = "01100002"
+
+    var adId_17 = "9AA728AE-EFBC-4B5E-9473-462FF5094F21"
+    var locId_17 = "01100352"
+
+    var adId_18 = "CC41D863-BF35-4317-85E1-B1736CA31893"
+    var locId_18 = "01100002"
+
+//    var adId = "71fbaa33-c8a2-4c73-974e-190a27bdcba3"
+//    var locId = "02100724"
+
+    //9300cb13-e559-4397-94c5-ab8f46e3e367?location=02100724
+//    var adId = "9300cb13-e559-4397-94c5-ab8f46e3e367"
+//    var locId = "02100724"
+
+//    var adId = "84E1A491-D9CA-4A13-BD5A-CC14F8516646"
+//    var locId = "01600128"
+
+//    var adId = "ebaa53d3-840f-4772-84d0-464e03ace4d5"
+//    var locId = "01400367"
+
+//    var adId = "bff71115-e620-4dc6-b9c1-14c4b885424d"
+//    var locId = "02100537"
+
+    var adId = "3F2822C7-E0D9-4B37-8880-AD35A07A5A98"
+    var locId = "01100002"
+
     // QA
     var adId_13 = "2d2514de-bd6c-42b7-aacd-43e1ac19bf1d"
     var locId_13 = "01600128"
@@ -82,13 +109,13 @@ fun WeeklyAdScreen(
     var stagingKey = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2"
     var prodKey = "bqwwosbzrzcvffztxzyczieljzsahmkp"
 
+    Log.i("PR1DigitalAd-AOS-SDK","PR1DigitalAd Version = v$DigitalAdLibVersion");
+
     DigitalAd(
-        adId = adId_13,
-        location = locId_13,
-        apiEnv = ApiEnv.QA,
-        apiKey = stagingKey,
-//        apiEnv = ApiEnv.PROD,
-//        apiKey = prodKey,
+        adId = adId,
+        location = locId,
+        apiEnv = ApiEnv.PROD,
+        apiKey = prodKey,
         onHotSpotClick = {  payload:SpotClickPayload ->
             if (payload.itemType == "promo") {
                 // Handle content type Creative

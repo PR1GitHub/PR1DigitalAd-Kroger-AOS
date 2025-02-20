@@ -71,13 +71,8 @@ internal fun AdPageView(
     var convertedHotMaps by remember { mutableStateOf(emptyList<MapArea>()) }
     var isOfferLoading by remember { mutableStateOf(false) }
 
-
-
     val context = LocalContext.current
-
     val fileUrl = adPage?.compressedFileURL;
-
-
 
     dpiimageWidth = pixelsToDp(displaySize.width)
     dpiimageHeight = pixelsToDp(displaySize.height)
@@ -86,26 +81,42 @@ internal fun AdPageView(
     val hDp = pixelsToDp(displaySize.height)
 
     val weeklyAdViewModel: DigitalAdViewModel = viewModel()
-    //val logEnabled = weeklyAdViewModel.logEnabled
 
     LaunchedEffect(fileUrl) {
 
-
         val adPageId = adPage?.eventPageId;
-
 
         if (adPageId != null) {
             Logger.i("[LOG]  Entered adPageId($adPageId) != null condition", saveLogs = null, sendToDB = false)
             try {
 
-
                 val adPageData: AdPage = weeklyAdService.getPageDetails(adId=adId, pageId = adPageId, location = location)
 
-                Logger.i("[API-LOG]  {adPageId: $adPageId} getPageDetails Api triggered...", saveLogs = null, sendToDB = false)
+                val logData = SaveLogs(SaveLogDetails(
+                    adId = adId, loc = location,
+                    appDetails = "AOS:[API-LOG-GetPageDetails]  {adPageId: $adPageId} getPageDetails Api triggered... { apiRequest : https://oms-kroger-webapp-da-classic-api-prod.przone.net/api/dacs/$adId/pages/$adPageId?location=$location }"
+                ))
+                Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+
+                val logData1 = SaveLogs(SaveLogDetails(
+                    adId = adId, loc = location,
+                    appDetails = "AOS:[API-LOG-GetPageDetails]  {adPageId: $adPageId} getPageDetails Api response :: $adPageData"
+                ))
+                Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = saveLogEnabled)
 
                 if (adPageData.contents.isNotEmpty()) {
 
-                    Logger.i("[LOG]  {adPageId: $adPageId} Entered adPageData.contents.isNotEmpty() condition.", saveLogs = null, sendToDB = false)
+                    val logData = SaveLogs(SaveLogDetails(
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[API-LOG-GetPageDetails] [AdPageView.kt]  getPageDetails Api SUCCESS {adId = $adId, eventPageId = $adPageId, location = $location}"
+                    ))
+                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+
+                    val logData1 = SaveLogs(SaveLogDetails(
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[LOG-GetPageDetails]  {adPageId: $adPageId} Entered adPageData.contents.isNotEmpty() condition."
+                    ))
+                    Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = saveLogEnabled)
 
                     val request = ImageRequest.Builder(context)
                         .data(fileUrl)
@@ -115,18 +126,49 @@ internal fun AdPageView(
                     imageWidth = result.intrinsicWidth.toFloat()
                     imageHeight = result.intrinsicHeight.toFloat()
 
-                    /* println("Original Image Size: width: $imageWidth, height: $imageHeight")
-                     println("Display Size: width: ${displaySize.width}, height: ${displaySize.height}")
-                     println("Display Size inDPI : width: ${dpiimageWidth.value}, height: ${dpiimageHeight.value}")*/
-
-
+                    /*
+                    println("Original Image Size: width: $imageWidth, height: $imageHeight")
+                    println("Display Size: width: ${displaySize.width}, height: ${displaySize.height}")
+                    println("Display Size inDPI : width: ${dpiimageWidth.value}, height: ${dpiimageHeight.value}")
+                    */
 
                     var pagehotMaps: List<MapArea> = emptyList()
 
+                    val logData2 = SaveLogs(SaveLogDetails(
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Convertion started for pageId: ${adPageData.eventPageId}"
+                    ))
+                    Logger.i("${logData2.value.appDetails}", saveLogs = logData2, sendToDB = saveLogEnabled)
+
                     adPageData?.contents?.forEachIndexed() { index, pageContent ->
+
+                        val logData = SaveLogs(SaveLogDetails(
+                            adId = adId, loc = location,
+                            appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Convertion in-progress for mapArea at index = $index with pageContent = $pageContent"
+                        ))
+                        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+
                         val mapArea = gson.fromJson(pageContent.mapConfig, MapArea::class.java)
                         pagehotMaps = pagehotMaps + mapArea
+
+                        val logData1 = SaveLogs(SaveLogDetails(
+                            adId = adId, loc = location,
+                            appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Convertion completed for mapArea at index = $index ;; mapArea = $mapArea"
+                        ))
+                        Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = saveLogEnabled)
                     }
+
+                    val logData3 = SaveLogs(SaveLogDetails(
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Convertion completed for pageId: ${adPageData.eventPageId}"
+                    ))
+                    Logger.i("${logData3.value.appDetails}", saveLogs = logData3, sendToDB = saveLogEnabled)
+
+                    val logData4 = SaveLogs(SaveLogDetails(
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  {pageId: ${adPageData.eventPageId}} pagehotMaps = $pagehotMaps"
+                    ))
+                    Logger.i("${logData4.value.appDetails}", saveLogs = logData4, sendToDB = saveLogEnabled)
 
                     if (imageWidth > 0f && imageHeight > 0f && dpiimageWidth > 0.dp && dpiimageHeight > 0.dp) {
 
@@ -137,29 +179,23 @@ internal fun AdPageView(
                             displayWidth = dpiimageWidth.value,
                             displayHeight = dpiimageHeight.value
                         )
+
+                        val logData = SaveLogs(SaveLogDetails(
+                            adId = adId, loc = location,
+                            appDetails = "AOS:[PAGE-HOTMAPS-SCALE_DOWN-GetPageDetails] [AdPageView.kt]  {pageId: ${adPageData.eventPageId}} convertedHotMaps = $convertedHotMaps"
+                        ))
+                        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
                     }
 
-                    val logData = SaveLogs(SaveLogDetails(
-                        adId = adId,
-                        loc = location,
-                        offerId = "",
-                        url = "",
-                        appDetails = "AOS:[API-LOG] [AdPageView.kt]  getPageDetails Api SUCCESS {adPageId: $adPageId}"
-                    ))
-                    Logger.i("[API-LOG] [AdPageView.kt]  getPageDetails Api SUCCESS {adPageId: $adPageId}", saveLogs = logData, sendToDB = saveLogEnabled)
-
-                }else{
+                }
+                else{
                     println(" Noooo Hot Maps")
 
                     val logData = SaveLogs(SaveLogDetails(
-                        adId = adId,
-                        loc = location,
-                        offerId = "",
-                        url = "",
-                        appDetails = "AOS:[API-LOG] [AdPageView.kt]  {adPageId: $adPageId} getPageDetails Api success but entered adPageData.contents.isEmpty() condition. NO Hot Maps"
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[API-LOG-GetPageDetails] [AdPageView.kt]  getPageDetails Api success but entered adPageData.contents.isEmpty() condition. NO Hot Maps ;; {adId = $adId, eventPageId = $adPageId, location = $location, apiRequest = https://oms-kroger-webapp-da-classic-api-prod.przone.net/api/dacs/$adId/pages/$adPageId?location=$location }"
                     ))
-                    Logger.i("[API-LOG] [AdPageView.kt]  {adPageId: $adPageId} getPageDetails Api success but entered adPageData.contents.isEmpty() condition. NO Hot Maps", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
                 }
 
@@ -168,30 +204,18 @@ internal fun AdPageView(
                 println(e)
 
                 val logData = SaveLogs(SaveLogDetails(
-                    adId = adId,
-                    loc = location,
-                    offerId = "",
-                    url = "",
-                    appDetails = "AOS:[API-LOG]  getPageDetails Api FAILED. {adPageId: $adPageId}"
+                    adId = adId, loc = location,
+                    appDetails = "AOS:[API-LOG-GetPageDetails]  getPageDetails Api FAILED. {adId = $adId, eventPageId = $adPageId, location = $location, apiRequest = https://oms-kroger-webapp-da-classic-api-prod.przone.net/api/dacs/$adId/pages/$adPageId?location=$location}}"
                 ))
-                Logger.e("[API-LOG]  getPageDetails Api FAILED. {adPageId: $adPageId}", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
             }
 
-
-        }else{
-            val logData = SaveLogs(SaveLogDetails(
-                adId = adId,
-                loc = location,
-                offerId = "",
-                url = "",
-                appDetails = "AOS:[LOG]  Entered adPageId = null condition."
-            ))
-            Logger.e("[LOG]  Entered adPageId = null condition.", saveLogs = logData, sendToDB = saveLogEnabled
-)
         }
-
+        else{
+            val logData = SaveLogs(SaveLogDetails(adId = adId, loc = location, appDetails = "AOS:[LOG]  Entered adPageId == null condition."))
+            Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+        }
 
     }
 
@@ -200,39 +224,39 @@ internal fun AdPageView(
     val onHotMapClickHandler : suspend (selectedMapArea:MapArea) -> Unit = { selectedMapArea ->
 
         val logData = SaveLogs(SaveLogDetails(
-            adId = adId,
-            loc = location,
-            offerId = "",
-            url = "",
+            adId = adId, loc = location,
             appDetails = "AOS:[HOTMAP-LOG]  Tapped on Hot Map. => selectedMapArea : $selectedMapArea"
         ))
-        Logger.i("[HOTMAP-LOG]  Tapped on Hot Map. => selectedMapArea : $selectedMapArea", saveLogs = logData, sendToDB = saveLogEnabled
-)
+        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
         try {
-
-
 
             if (selectedMapArea.contentType?.lowercase() == "creative") {
 
                 val logData1 = SaveLogs(SaveLogDetails(
-                    adId = adId,
-                    loc = location,
-                    offerId = "",
-                    url = "",
+                    adId = adId, loc = location,
                     appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  selectedMapArea = $selectedMapArea"
                 ))
-                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  selectedMapArea = $selectedMapArea", saveLogs = logData1, sendToDB = saveLogEnabled
-)
+                Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = saveLogEnabled)
 
                 var idVal = "0";
 
                 try {
                     if(selectedMapArea.contentId != null) {
                         idVal = selectedMapArea.contentId.toString()
+
+                        val logData = SaveLogs(SaveLogDetails(
+                            appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  selectedMapArea.contentId(${selectedMapArea.contentId}) != null ;; id_to_string = $idVal"
+                        ))
+                        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
                     }
                 } catch (e: NumberFormatException) {
                     println("Error: The string is not a valid integer")
+
+                    val logData = SaveLogs(SaveLogDetails(
+                        appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  selectedMapArea.contentId(${selectedMapArea.contentId}) is not a valid integer"
+                    ))
+                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
                 }
 
                 var webURLVal="";
@@ -240,15 +264,24 @@ internal fun AdPageView(
                 var patVal = "";
                 var peVal="";
 
-
-
-
-
                 if( selectedMapArea.content != null){
                     webURLVal= selectedMapArea.content!!.webUrl
                     appURLVal= selectedMapArea.content!!.appUrl
                     patVal = selectedMapArea.content!!.altText
                     peVal = selectedMapArea.content!!.event
+
+                    val logData = SaveLogs(SaveLogDetails(
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  Entered selectedMapArea.content != null condition"
+                    ))
+                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+                }
+                else {
+                    val logData = SaveLogs(SaveLogDetails(
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  Entered selectedMapArea.content == null condition"
+                    ))
+                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
                 }
 
 
@@ -275,29 +308,20 @@ internal fun AdPageView(
                 Logger.i("[PAYLOAD]  Promo details payload dispatched.", saveLogs = null, sendToDB = false)
                 onHotSpotClick(payload)
 
-                val logData2 = SaveLogs(SaveLogDetails(
-                    adId = adId,
-                    loc = location,
-                    offerId = "",
-                    url = "",
-                    appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  Payload dispatched : $payload"
-                ))
-                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  Calling savelogs Api...", saveLogs = logData2, sendToDB = saveLogEnabled
-)
+                val logData2 = SaveLogs(SaveLogDetails(adId = adId, loc = location, appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Promo]  Payload dispatched : $payload"))
+                Logger.i("${logData2.value.appDetails}", saveLogs = logData2, sendToDB = saveLogEnabled)
 
-            }else{
+            }
+            else{
 
-                val logData1 = SaveLogs(SaveLogDetails(
-                    adId = adId,
-                    loc = location,
-                    offerId = "",
-                    url = "",
+                val logData = SaveLogs(SaveLogDetails(
+                    adId = adId, loc = location,
                     appDetails = "AOS:[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Offer]  selectedMapArea = $selectedMapArea"
                 ))
-                Logger.i("[HOTMAP-LOG] [AdPageView.kt : onHotMapClickHandler > Offer]  selectedMapArea = $selectedMapArea", saveLogs = logData1, sendToDB = saveLogEnabled
-)
+                Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
                 isOfferLoading = true
+
                 if (selectedMapArea.content?.offerVersionProductGroupId != null) {
                     Logger.i("[HOTMAP-LOG]  Entered offerVersionProductGroupId != null condition", saveLogs = null, sendToDB = false)
 
@@ -307,17 +331,17 @@ internal fun AdPageView(
                         location = location
                     );
 
-                    Logger.i("[API-LOG]  {offerVersionProductGroupId = ${selectedMapArea!!.content!!.offerVersionProductGroupId} getOfferDetails Api triggered...", saveLogs = null, sendToDB = false)
-
                     val logData = SaveLogs(SaveLogDetails(
-                        adId = adId,
-                        loc = location,
-                        offerId = "",
-                        url = "",
-                        appDetails = "AOS:[API-LOG] [AdPageView.kt :  onHotMapClickHandler > Offer]  getOfferDetails Api triggered... {offerVersionProductGroupId = ${selectedMapArea!!.content!!.offerVersionProductGroupId}"
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[API-LOG] [AdPageView.kt :  onHotMapClickHandler > Offer]  getOfferDetails Api triggered... { offerVersionProductGroupId = ${selectedMapArea!!.content!!.offerVersionProductGroupId}, apiRequest = https://oms-kroger-webapp-da-classic-api-prod.przone.net/api/dacs/$adId/offers/${selectedMapArea!!.content!!.offerVersionProductGroupId} }"
                     ))
-                    Logger.i("[API-LOG] [AdPageView.kt :  onHotMapClickHandler > Offer] getOfferDetails Api triggered... {offerVersionProductGroupId = ${selectedMapArea!!.content!!.offerVersionProductGroupId}", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+
+                    val logData1 = SaveLogs(SaveLogDetails(
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[API-LOG]  getOfferDetails api response : $offerDetailsList"
+                    ))
+                    Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = false)
 
                     if (offerDetailsList != null) {
 
@@ -345,52 +369,33 @@ internal fun AdPageView(
                         Logger.i("[PAYLOAD]  Offer payload dispatched.", saveLogs = null, sendToDB = false)
                         onHotSpotClick(payload)
 
-                        val logData = SaveLogs(SaveLogDetails(
-                            adId = adId,
-                            loc = location,
-                            offerId = "",
-                            url = "",
-                            appDetails = "AOS:[HOTMAP-LOG] {Offer} Payload dispatched : $payload"
-                        ))
-                        Logger.i("[HOTMAP-LOG] {Offer} Payload dispatched : $payload", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                        val logData = SaveLogs(SaveLogDetails(adId = adId, loc = location, appDetails = "AOS:[HOTMAP-LOG] {Offer} Payload dispatched : $payload"))
+                        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
                     }
                 }
                 else {
                     val logData = SaveLogs(SaveLogDetails(
-                        adId = adId,
-                        loc = location,
-                        offerId = "",
-                        url = "",
+                        adId = adId, loc = location,
                         appDetails = "AOS:[LOG]  offerVersionProductGroupId == null for selectedMapArea : $selectedMapArea ;; [ getOfferDetails Api will not be triggered]."
                     ))
-                    Logger.e("[LOG]  offerVersionProductGroupId == null for selectedMapArea : $selectedMapArea ;; [ getOfferDetails Api will not be triggered].", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                    Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
                 }
             }
 
 
-        }catch (e: Exception) {
-            println("Error fetching offer details ${e.message}")
-
+        } catch (e: Exception) {
             Logger.e("[LOG]  {onHotMapClickHandler > catch block} Error fetching offerDetails ${e.message}", saveLogs = null, sendToDB = false)
 
             val logData = SaveLogs(SaveLogDetails(
-                adId = "",
-                loc = "",
-                offerId = "",
-                url = "",
+                adId = "", loc = "",
                 appDetails = "AOS:[LOG]  {onHotMapClickHandler > catch block} Error : ${e.message} ; selectedMapArea = $selectedMapArea"
             ))
-            Logger.e("[LOG]  {onHotMapClickHandler > catch block} Error : ${e.message} ; selectedMapArea = $selectedMapArea", saveLogs = logData, sendToDB = saveLogEnabled
-)
-
+            Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
         }
         finally {
             isOfferLoading = false
         }
-
 
     }
 
@@ -436,8 +441,6 @@ internal fun AdPageView(
             }
     ) {
 
-
-
         if(imageState == "loading"){
             Box(
                 modifier = Modifier
@@ -447,25 +450,6 @@ internal fun AdPageView(
             )
         }
 
-//        SubcomposeAsyncImage(
-//            model = fileUrl,
-//            contentDescription = null,
-//            loading = {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(440.dp)
-//                        .padding(horizontal = Dimens.MediumPadding1)
-//                        .shimmerEffect()
-//                )
-//            },
-//
-//            error = { BasicText(text = "Error loading image") },
-//
-//            contentScale = ContentScale.Fit,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//        )
         if(imageState == "error"){
             BasicText(text = "Error loading Page")
         }
@@ -489,6 +473,8 @@ internal fun AdPageView(
 
             //  println(" DrawHotMaps DrawHotMaps DrawHotMaps DrawHotMaps")
 
+            val logData = SaveLogs(SaveLogDetails(appDetails = "AOS:[DRAW-HOTMAP-LOG]  Sending convertedHotMaps to DrawHotMaps() for pageKey($key) = $convertedHotMaps"))
+            Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
             DrawHotMaps(
                 hotMaps = convertedHotMaps,
@@ -499,48 +485,33 @@ internal fun AdPageView(
                         it ->
                     Logger.i("[DRAW-HOTMAP-LOG] {onMapAreaClick}", saveLogs = null, sendToDB = false)
 
-                    val logData = SaveLogs(SaveLogDetails(
-                        adId = "",
-                        loc = "",
-                        offerId = "",
-                        url = "",
-                        appDetails = "AOS:[DRAW-HOTMAP-LOG]  {onMapAreaClick} Entered DrawHotMaps."
-                    ))
-                    Logger.i("[DRAW-HOTMAP-LOG]  {onMapAreaClick} Entered DrawHotMaps.", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                    val logData = SaveLogs(SaveLogDetails(appDetails = "AOS:[DRAW-HOTMAP-LOG]  {onMapAreaClick} Entered DrawHotMaps."))
+                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
                     coroutineScope.launch {
 
                         onHotMapClickHandler.invoke(it)
 
-                        val logData = SaveLogs(SaveLogDetails(
-                            adId = "",
-                            loc = "",
-                            offerId = "",
-                            url = "",
-                            appDetails = "AOS:[DRAW-HOTMAP-LOG]  {onMapAreaClick} HANDLER INVOKED."
-                        ))
-                        Logger.i("[DRAW-HOTMAP-LOG]  {onMapAreaClick} HANDLER INVOKED.", saveLogs = logData, sendToDB = saveLogEnabled
-)
+                        val logData = SaveLogs(SaveLogDetails(appDetails = "AOS:[DRAW-HOTMAP-LOG]  {onMapAreaClick} HANDLER INVOKED."))
+                        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
                     }
 
-//                    if (it.contentType?.lowercase() == "creative") {
-//                        Toast.makeText(
-//                            context,
-//                            "Clicked on Creative spot will be redirected to ${it.content?.webUrl}",
-//                            Toast.LENGTH_LONG
-//                        ).show()
-//                    } else {
-//                        isOfferLoading = true
-//                        coroutineScope.launch {
-//                            loadOfferDetails.invoke(it)
-//                        }
-//
-//
-//
-//                        //isPopupVisible = true
-//                    }
+                    /*
+                    if (it.contentType?.lowercase() == "creative") {
+                        Toast.makeText(
+                            context,
+                            "Clicked on Creative spot will be redirected to ${it.content?.webUrl}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        isOfferLoading = true
+                        coroutineScope.launch {
+                            loadOfferDetails.invoke(it)
+                        }
+                        //isPopupVisible = true
+                    }
+                    */
 
                 }
             )
@@ -561,64 +532,57 @@ internal fun AdPageView(
             }
         }
 
-//{ offerDetails = null }
-//        if (offerDetails != null) {
-//            AlertDialog(
-//                modifier = Modifier.wrapContentHeight(),
-//                onDismissRequest = { offerDetails = null },
-//                title = {
-//                    Row(
-//                        modifier = Modifier
-//                            .fillMaxWidth() ,
-//                        horizontalArrangement = Arrangement.SpaceBetween,
-//                        verticalAlignment = Alignment.CenterVertically // Center align the content vertically
-//                    ) {
-//                        Text(
-//                            text = "Offer Details",
-//                            style = MaterialTheme.typography.titleMedium
-//                        )
-//                        IconButton(onClick = { offerDetails = null }) {
-//                            Icon(
-//                                imageVector = Icons.Sharp.Close,
-//                                contentDescription = "Close"
-//                            )
-//                        }
-//                    }
-//                },
-//                text = {
-//                    Box(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .wrapContentHeight()
-//                    ) {
-//
-//                        if(offerDetails != null) {
-//                            MapAreaContentView(
-//                                modifier = Modifier,
-//                                offerDetails = offerDetails!!,
-//                                eventId = eventId
-//                            ) {
-//                                offerDetails = null
-//                            }
-//                        }
-//                    }
-//                },
-//                confirmButton = { }
-//            )
-//        }
+        /*
+{ offerDetails = null }
+        if (offerDetails != null) {
+            AlertDialog(
+                modifier = Modifier.wrapContentHeight(),
+                onDismissRequest = { offerDetails = null },
+                title = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth() ,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically // Center align the content vertically
+                    ) {
+                        Text(
+                            text = "Offer Details",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        IconButton(onClick = { offerDetails = null }) {
+                            Icon(
+                                imageVector = Icons.Sharp.Close,
+                                contentDescription = "Close"
+                            )
+                        }
+                    }
+                },
+                text = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    ) {
 
-
-
-
+                        if(offerDetails != null) {
+                            MapAreaContentView(
+                                modifier = Modifier,
+                                offerDetails = offerDetails!!,
+                                eventId = eventId
+                            ) {
+                                offerDetails = null
+                            }
+                        }
+                    }
+                },
+                confirmButton = { }
+            )
+        }
+        */
 
     }
 
 } // Box
-
-
-
-
-
 
 
 
@@ -630,6 +594,10 @@ private fun DrawHotMaps(
     pageKey: Int,
     onMapAreaClick: ((MapArea) -> Unit)
 ) {
+
+    val logData = SaveLogs(SaveLogDetails(appDetails = "AOS:[DRAW-HOTMAP-LOG]  HotMaps receievd by DrawHotMaps() for pageKey($pageKey) = $hotMaps"))
+    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = true)
+
     if (hotMaps.isEmpty()) {
         return
     }
@@ -650,7 +618,7 @@ private fun DrawHotMaps(
             val top = floor(mapArea.y1).dp
             val right = floor(mapArea.x2).dp
             val bottom = floor(mapArea.y2).dp
-//Color.LightGray.copy(alpha = 0.4f)
+            //Color.LightGray.copy(alpha = 0.4f)
             Box(
                 modifier = Modifier
                     .offset(x = left, y = top)
@@ -663,12 +631,14 @@ private fun DrawHotMaps(
                     }
             ) {
                 // Optionally, you can add content to each Box here, like labels or icons
-//                Text(
-//                    text = "Area",
-//                    color = Color.White,
-//                    fontSize = 14.sp,
-//                    modifier = Modifier.align(Alignment.Center)
-//                )
+                /*
+                Text(
+                    text = "Area",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+                */
             }
         }
     }

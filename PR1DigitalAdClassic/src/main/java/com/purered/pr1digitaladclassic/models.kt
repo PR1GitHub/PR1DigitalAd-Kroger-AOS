@@ -151,9 +151,9 @@ data class SaveLogs(
 )
 
 data class SaveLogDetails(
-    val adId: String,
-    val loc: String,
-    val offerId: String,
-    val url: String,
-    val appDetails: String
+    val adId: String? = "",
+    val loc: String? = "",
+    val offerId: String? = "",
+    val url: String? = "",
+    val appDetails: String? = ""
 )
