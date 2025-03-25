@@ -125,6 +125,7 @@ fun DigitalAd(
                                 ))
                                 Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = ad.isLogEnabled)
                             }
+
                         }
                     }
                 }

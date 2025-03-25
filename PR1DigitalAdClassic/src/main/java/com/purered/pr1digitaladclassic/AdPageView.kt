@@ -5,6 +5,9 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -34,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
@@ -48,6 +52,9 @@ import coil.imageLoader
 import kotlin.math.floor
 
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+
 
 @Composable
 internal fun AdPageView(
@@ -399,39 +406,6 @@ internal fun AdPageView(
 
     }
 
-
-
-//    val loadOfferDetails: suspend (selectedMapArea:MapArea) -> Unit =  { selectedMapArea ->
-//
-//        try {
-//
-//            if (selectedMapArea?.content?.offerVersionProductGroupId != null) {
-//                val offerDetailsList = weeklyAdService.getOfferDetails(
-//                    eventId,
-//                    selectedMapArea!!.content!!.offerVersionProductGroupId.toInt()
-//                );
-//                if (offerDetailsList.isNotEmpty()) {
-//                    offerDetails = offerDetailsList[0]
-//                }
-//            }
-//
-//        } catch (
-//            e: Exception
-//        ) {
-//            Toast.makeText(
-//                context,
-//                "",
-//                Toast.LENGTH_LONG
-//            ).show()
-//
-//            println("Error fetching offer details ${e.message}")
-//        }finally {
-//            isOfferLoading = false
-//        }
-//    }
-
-    // val painter = rememberAsyncImagePainter(model = fileUrl)
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -532,53 +506,7 @@ internal fun AdPageView(
             }
         }
 
-        /*
-{ offerDetails = null }
-        if (offerDetails != null) {
-            AlertDialog(
-                modifier = Modifier.wrapContentHeight(),
-                onDismissRequest = { offerDetails = null },
-                title = {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth() ,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically // Center align the content vertically
-                    ) {
-                        Text(
-                            text = "Offer Details",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        IconButton(onClick = { offerDetails = null }) {
-                            Icon(
-                                imageVector = Icons.Sharp.Close,
-                                contentDescription = "Close"
-                            )
-                        }
-                    }
-                },
-                text = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                    ) {
 
-                        if(offerDetails != null) {
-                            MapAreaContentView(
-                                modifier = Modifier,
-                                offerDetails = offerDetails!!,
-                                eventId = eventId
-                            ) {
-                                offerDetails = null
-                            }
-                        }
-                    }
-                },
-                confirmButton = { }
-            )
-        }
-        */
 
     }
 
@@ -595,6 +523,7 @@ private fun DrawHotMaps(
     onMapAreaClick: ((MapArea) -> Unit)
 ) {
 
+    var hotMapViewModel:HotMapViewModel = viewModel()
     val logData = SaveLogs(SaveLogDetails(appDetails = "AOS:[DRAW-HOTMAP-LOG]  HotMaps receievd by DrawHotMaps() for pageKey($pageKey) = $hotMaps"))
     Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = true)
 
@@ -605,6 +534,9 @@ private fun DrawHotMaps(
     val context = LocalContext.current
     val wDp = pixelsToDp(width)
     val hDp = pixelsToDp(height)
+    val coroutineScope = rememberCoroutineScope()
+    var lastTapTime by remember { mutableStateOf(0L) }  // ✅ Track last tap time
+    val tapCooldown = 500L  // ✅ Cooldown in milliseconds
 
     Box(
         modifier = Modifier
@@ -618,28 +550,73 @@ private fun DrawHotMaps(
             val top = floor(mapArea.y1).dp
             val right = floor(mapArea.x2).dp
             val bottom = floor(mapArea.y2).dp
-            //Color.LightGray.copy(alpha = 0.4f)
+           // Color.LightGray.copy(alpha = 0.4f)
             Box(
                 modifier = Modifier
                     .offset(x = left, y = top)
                     .width(right - left)
                     .height(bottom - top)
                     .background(Color.Transparent)
-                    .border(1.dp, Color.Transparent)
-                    .clickable {
-                        onMapAreaClick(mapArea)
+                    .border(1.dp, Color.Red)
+
+                    .pointerInput(Unit) {
+                        forEachGesture {
+                            awaitPointerEventScope {
+                                val event = awaitPointerEvent()
+                                val tap = event.changes.firstOrNull { it.pressed }
+
+                                if (tap != null) {
+                                    val currentTime = System.currentTimeMillis()
+
+                                    if (currentTime - lastTapTime < tapCooldown) {
+                                        Log.d("DrawHotMaps", "Ignoring tap due to cooldown")
+                                        return@awaitPointerEventScope  // ✅ Ignore duplicate taps
+                                    }
+
+                                    lastTapTime = currentTime // ✅ Update last tap time
+
+                                    Log.d("DrawHotMaps", "Tap detected, delaying to check zoom...")
+                                    coroutineScope.launch {
+                                        delay(300) // Delay tap processing to allow zoom detection
+
+                                        if (!hotMapViewModel.isZooming) { // Check if zoom is active after delay
+                                            Log.d("DrawHotMaps", "No zoom detected, consuming tap")
+                                            tap.consume()
+                                            onMapAreaClick(mapArea)
+                                        } else {
+                                            Log.d("DrawHotMaps", "Zoom detected, ignoring tap")
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-            ) {
-                // Optionally, you can add content to each Box here, like labels or icons
-                /*
-                Text(
-                    text = "Area",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-                */
-            }
+
+//                    .pointerInput(Unit) {
+//                        awaitPointerEventScope {
+//                            while (true) {
+//                                val event = awaitPointerEvent()
+//                                val tap = event.changes.firstOrNull { it.pressed }
+//
+//                                if (tap != null) {
+//                                    Log.d("DrawHotMaps", "Tap detected, delaying to check zoom...")
+//
+//                                    coroutineScope.launch {
+//                                        delay(300) // Delay tap processing to allow zoom detection
+//
+//                                        if (!hotMapViewModel.isZooming) { // Check if zoom is active after delay
+//                                            Log.d("DrawHotMaps", "No zoom detected, consuming tap")
+//                                            tap.consume()
+//                                           onMapAreaClick(mapArea)
+//                                        } else {
+//                                            Log.d("DrawHotMaps", "Zoom detected, ignoring tap")
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+            )
         }
     }
 }
