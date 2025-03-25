@@ -65,7 +65,7 @@ fun ZoomableBoxContent(
                         Log.d("ZoomTracker", "Zoom started")
                     }
                     Log.d("DrawHotMaps", "detectTransformGestures ONNNNN..!!!")
-                    if (!isTapDetected) { // 🔥 Prevents zooming when tap happens
+                    if (!isTapDetected) {
                         Log.d("DrawHotMaps", "ZOOOOOMINGGGG..!!!")
                         scale = (scale * zoom).coerceIn(1f, 5f)
 
@@ -75,11 +75,14 @@ fun ZoomableBoxContent(
                         val maxX = extraWidth / 2
                         val maxY = extraHeight / 2
 
-                        offset += pan * scale
+                        // ✅ Adjusted pan factor for better movement speed
+                        val adjustedPan = pan * 0.8f  // Reduce dampening effect, making panning easier
+                        offset += adjustedPan
 
+                        // ✅ Allow full movement without over-restricting edges
                         offset = Offset(
-                            x = offset.x.coerceIn(-maxX.absoluteValue, maxX.absoluteValue),
-                            y = offset.y.coerceIn(-maxY.absoluteValue, maxY.absoluteValue)
+                            x = offset.x.coerceIn(-maxX * 1.2f, maxX * 1.2f),  // Give extra space for better reachability
+                            y = offset.y.coerceIn(-maxY * 1.2f, maxY * 1.2f)
                         )
                     }
 
