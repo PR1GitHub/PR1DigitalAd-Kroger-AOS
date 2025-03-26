@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -409,6 +410,8 @@ internal fun AdPageView(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .border(1.dp, Color.White)
+            .clipToBounds()
             .onGloballyPositioned { layoutCoordinates ->
                 displaySize = layoutCoordinates.size.toSize()
                 // println("Display Size: width: ${displaySize.width}, height: ${displaySize.height}")
