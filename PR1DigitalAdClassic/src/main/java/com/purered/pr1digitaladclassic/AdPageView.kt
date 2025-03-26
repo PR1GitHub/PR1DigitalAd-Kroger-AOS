@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +40,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
@@ -55,6 +58,7 @@ import kotlin.math.floor
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlin.math.absoluteValue
 
 
 @Composable
@@ -561,64 +565,54 @@ private fun DrawHotMaps(
                     .height(bottom - top)
                     .background(Color.Transparent)
                     .border(1.dp, Color.Red)
-
                     .pointerInput(Unit) {
                         forEachGesture {
                             awaitPointerEventScope {
-                                val event = awaitPointerEvent()
-                                val tap = event.changes.firstOrNull { it.pressed }
+                                val down = awaitFirstDown(requireUnconsumed = false) // Detect initial touch
+                                val touchSlop = viewConfiguration.touchSlop // System-defined threshold
+                                val velocityTracker = VelocityTracker() // Track movement speed
+                                var isScrolling = false
+                                var isFling = false
 
-                                if (tap != null) {
-                                    val currentTime = System.currentTimeMillis()
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val change = event.changes.firstOrNull() ?: continue
 
-                                    if (currentTime - lastTapTime < tapCooldown) {
-                                        Log.d("DrawHotMaps", "Ignoring tap due to cooldown")
-                                        return@awaitPointerEventScope  // ✅ Ignore duplicate taps
+                                    velocityTracker.addPosition(change.uptimeMillis, change.position) // Track movement
+
+                                    if (change.positionChange().getDistance() > touchSlop) {
+                                        isScrolling = true // Mark as scrolling if movement exceeds threshold
                                     }
 
-                                    lastTapTime = currentTime // ✅ Update last tap time
-
-                                    Log.d("DrawHotMaps", "Tap detected, delaying to check zoom...")
-                                    coroutineScope.launch {
-                                        delay(300) // Delay tap processing to allow zoom detection
-
-                                        if (!hotMapViewModel.isZooming) { // Check if zoom is active after delay
-                                            Log.d("DrawHotMaps", "No zoom detected, consuming tap")
-                                            tap.consume()
-                                            onMapAreaClick(mapArea)
-                                        } else {
-                                            Log.d("DrawHotMaps", "Zoom detected, ignoring tap")
-                                        }
+                                    if (change.pressed.not()) { // Finger lifted
+                                        val velocity = velocityTracker.calculateVelocity()
+                                        isFling = velocity.x.absoluteValue > 1000 || velocity.y.absoluteValue > 1000
+                                        break
                                     }
                                 }
+
+                                if (isFling) {
+                                    Log.d("DrawHotMaps", "Fling detected! Ignoring tap")
+                                    return@awaitPointerEventScope
+                                }
+
+                                if (isScrolling) {
+                                    Log.d("DrawHotMaps", "Scrolling detected, ignoring tap")
+                                    return@awaitPointerEventScope
+                                }
+
+                                if (hotMapViewModel.isZooming) { // ✅ Check if zooming before triggering tap
+                                    Log.d("DrawHotMaps", "Zoom detected, ignoring tap")
+                                    return@awaitPointerEventScope
+                                }
+
+                                // **Valid tap detected**
+                                Log.d("DrawHotMaps", "Tap detected on HotMap, triggering click")
+                                onMapAreaClick(mapArea)
                             }
                         }
                     }
 
-//                    .pointerInput(Unit) {
-//                        awaitPointerEventScope {
-//                            while (true) {
-//                                val event = awaitPointerEvent()
-//                                val tap = event.changes.firstOrNull { it.pressed }
-//
-//                                if (tap != null) {
-//                                    Log.d("DrawHotMaps", "Tap detected, delaying to check zoom...")
-//
-//                                    coroutineScope.launch {
-//                                        delay(300) // Delay tap processing to allow zoom detection
-//
-//                                        if (!hotMapViewModel.isZooming) { // Check if zoom is active after delay
-//                                            Log.d("DrawHotMaps", "No zoom detected, consuming tap")
-//                                            tap.consume()
-//                                           onMapAreaClick(mapArea)
-//                                        } else {
-//                                            Log.d("DrawHotMaps", "Zoom detected, ignoring tap")
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
             )
         }
     }
