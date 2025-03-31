@@ -137,7 +137,7 @@ fun ZoomableBoxContent(
         ) {
             content()
         }
- 
+
         //  Zoom Controls (+ and - buttons)
         Box(
             modifier = Modifier
@@ -174,7 +174,12 @@ fun ZoomableBoxContent(
 
 
                 FloatingActionButton(
-                    onClick = { scale = (scale - 1f).coerceAtLeast(1f) },
+                    onClick = {
+                        scale = (scale - 1f).coerceAtLeast(1f)
+                                            if(scale == 1f){
+                                                offset = Offset.Zero
+                                            }
+                              },
                     modifier = Modifier
                         .size(48.dp)
                         .offset(y = -2.dp)

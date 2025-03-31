@@ -538,6 +538,7 @@ private fun DrawHotMaps(
         return
     }
 
+
     val context = LocalContext.current
     val wDp = pixelsToDp(width)
     val hDp = pixelsToDp(height)
@@ -564,7 +565,7 @@ private fun DrawHotMaps(
                     .width(right - left)
                     .height(bottom - top)
                     .background(Color.Transparent)
-                    .border(1.dp, Color.Red)
+                    .border(1.dp, Color.Transparent)
                     .pointerInput(Unit) {
                         forEachGesture {
                             awaitPointerEventScope {
