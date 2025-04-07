@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.util.Log
 
-val DigitalAdLibVersion = "0.0.8" // This is the version of the DigitalAd library
+val DigitalAdLibVersion = "0.0.9" // This is the version of the DigitalAd library
 
 data class SpotClickPayload(
     val itemType: String,

@@ -38,7 +38,7 @@ import com.purered.pr1digitaladclassic.SpotClickPayload
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        //enableEdgeToEdge()
         setContent {
             PR1DigitalAdTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -99,8 +99,8 @@ fun WeeklyAdScreen(
 //    var adId = "bff71115-e620-4dc6-b9c1-14c4b885424d"
 //    var locId = "02100537"
 
-    var adId = "3F2822C7-E0D9-4B37-8880-AD35A07A5A98"
-    var locId = "01100002"
+    var adId = "3e41d207-818b-4e65-a07e-8079608b2d2f"
+    var locId = "02100537"
 
     // QA
     var adId_13 = "2d2514de-bd6c-42b7-aacd-43e1ac19bf1d"

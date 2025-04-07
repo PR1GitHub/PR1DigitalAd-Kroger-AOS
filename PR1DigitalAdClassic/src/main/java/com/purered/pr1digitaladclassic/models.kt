@@ -1,35 +1,19 @@
 package com.purered.pr1digitaladclassic
 
-import android.content.Context
-import android.util.DisplayMetrics
-import android.view.WindowManager
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import java.text.SimpleDateFormat
-import java.util.Locale
-
-internal data class PageContent(
-    val contentType: String,
-    val eventPageContentId: String,
-    val mapConfig: String
+/*-- CIRCULAR DETAILS from getAdDetails API --*/
+internal data class WeeklyAd(
+    val adDescription: String,
+    val adTitle: String,
+    val circularType: String,
+    val endDate: String,
+    val eventId: Int,
+    val eventName: String,
+    val pages: List<AdPage>,
+    val logLevelCode: Int,
+    val isLogEnabled: Boolean
 )
 
-
-
-
+/*-- AD PAGE DETAILS from getPageDetails API --*/
 internal data class AdPage(
     val eventPageId: String,
     val page: String,
@@ -48,7 +32,48 @@ internal data class AdPage(
     val contents: List<PageContent>
 )
 
+internal data class PageContent(
+    val contentType: String,
+    val eventPageContentId: String,
+    val mapConfig: String
+)
 
+internal data class HotMaps(
+    val height: Int,
+    val width: Int,
+    val maps: List<MapArea>
+)
+
+/*-- PARSING JSON STRING from getPageDetails API --*/
+internal data class MapArea(
+    val x1: Float,
+    val y1: Float,
+    val x2: Float,
+    val y2: Float,
+    val lineWidth: Int,
+    val color: String,
+    val isSelected: Boolean,
+    val hasAttached: Boolean,
+    val contentId: String? = null,
+    val contentType: String? = null, //"Creative" or "Offer"
+    val eventPageContentId: String? = null,
+    var content: MapAreaContent? = null
+)
+
+internal data class MapAreaContent(
+    val altText: String,
+    val appUrl: String,
+    val event: String,
+    val id: String,
+    val webUrl: String,
+    val bodyCopy: String,
+    val headline: String,
+    val imageURL: String,
+    val index: String,
+    val offerVersionProductGroupId: String,
+)
+
+/*-- OFFER DETAILS --*/
 internal data class OfferDetails(
 
     // By Default All are optional atrributes, should be validated when converting to SpotClickPayload,
@@ -87,65 +112,8 @@ internal data class OfferDetails(
     val genericDisclaimer:String?
 )
 
-internal data class WeeklyAd(
-    val adDescription: String,
-    val adTitle: String,
-    val circularType: String,
-    val endDate: String,
-    val eventId: Int,
-    val eventName: String,
-    val pages: List<AdPage>,
-    val logLevelCode: Int,
-    val isLogEnabled: Boolean
-)
 
-
-
-internal data class HotMaps(
-    val height: Int,
-    val width: Int,
-    val maps: List<MapArea>
-)
-
-internal data class MapAreaContent(
-    val altText: String,
-    val appUrl: String,
-    val event: String,
-    val id: String,
-    val webUrl: String,
-    val bodyCopy: String,
-    val headline: String,
-    val imageURL: String,
-    val index: String,
-    val offerVersionProductGroupId: String,
-)
-
-
-internal data class MapArea(
-    val x1: Float,
-    val y1: Float,
-    val x2: Float,
-    val y2: Float,
-    val lineWidth: Int,
-    val color: String,
-    val isSelected: Boolean,
-    val hasAttached: Boolean,
-    val contentId: String? = null,
-    val contentType: String? = null, //"Creative" or "Offer"
-    val eventPageContentId: String? = null,
-    var content: MapAreaContent? = null
-
-)
-
-
-internal  data class BoxData(
-    val left: Float,
-    val top: Float,
-    val right: Float,
-    val bottom: Float
-)
-
-
+/*-- SAVE LOGS --*/
 data class SaveLogs(
     val value: SaveLogDetails
 )
@@ -156,4 +124,15 @@ data class SaveLogDetails(
     val offerId: String? = "",
     val url: String? = "",
     val appDetails: String? = ""
+)
+
+
+
+
+/*-- OTHER --*/
+internal  data class BoxData(
+    val left: Float,
+    val top: Float,
+    val right: Float,
+    val bottom: Float
 )

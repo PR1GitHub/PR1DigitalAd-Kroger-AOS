@@ -64,7 +64,7 @@ publishing{
                 from(components.findByName("release"))
                 groupId = "com.purered.pr1digitaladclassic"
                 artifactId = "pr1digitaladclassic"
-                version = "0.0.8"
+                version = "0.0.9"
 
                 //com.purered.pr1digitaladclassic:pr1digitaladclassic:0.0.4
             }
@@ -91,4 +91,5 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.google.dagger:hilt-android:2.45")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }

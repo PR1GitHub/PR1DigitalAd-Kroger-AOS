@@ -58,6 +58,9 @@ import kotlin.math.floor
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.serialization.json.Json
+import okhttp3.ResponseBody
+import org.json.JSONObject
 import kotlin.math.absoluteValue
 
 
@@ -160,6 +163,26 @@ internal fun AdPageView(
                         ))
                         Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
+                        try {
+                            val jsonString = pageContent.mapConfig
+                            Logger.d("jsonString at index($index): $jsonString", saveLogs = null, sendToDB = false)
+
+                            val mapArea = convertJsonToMapArea(jsonString)
+                            Logger.i("convertJsonToMapArea at index($index): $mapArea", saveLogs = null, sendToDB = false)
+
+                            pagehotMaps = pagehotMaps + mapArea
+
+                            val logData1 = SaveLogs(SaveLogDetails(
+                                adId = adId, loc = location,
+                                appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Convertion completed for mapArea at index = $index ;; mapArea = $mapArea"
+                            ))
+                            Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = saveLogEnabled)
+                        }
+                        catch (e: Exception) {
+                            Logger.i("AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Convertion for mapArea at index = $index FAILED", saveLogs = null, sendToDB = false)
+                        }
+
+                        /*
                         val mapArea = gson.fromJson(pageContent.mapConfig, MapArea::class.java)
                         pagehotMaps = pagehotMaps + mapArea
 
@@ -168,6 +191,7 @@ internal fun AdPageView(
                             appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Convertion completed for mapArea at index = $index ;; mapArea = $mapArea"
                         ))
                         Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = saveLogEnabled)
+                        */
                     }
 
                     val logData3 = SaveLogs(SaveLogDetails(
@@ -617,4 +641,41 @@ private fun DrawHotMaps(
             )
         }
     }
+}
+
+
+internal fun convertJsonToMapArea(jsonString: String): MapArea {
+    val jsonObject = JSONObject(jsonString)
+
+    val contentObject = jsonObject.optJSONObject("content")
+
+    val mapAreaContent = contentObject?.let {
+        MapAreaContent(
+            altText = it.optString("altText", ""),
+            appUrl = it.optString("appUrl", ""),
+            event = it.optString("event", ""),
+            id = it.optString("id", ""),
+            webUrl = it.optString("webUrl", ""),
+            bodyCopy = it.optString("bodyCopy", ""),
+            headline = it.optString("headline", ""),
+            imageURL = it.optString("imageURL", ""),
+            index = it.optString("index", ""),
+            offerVersionProductGroupId = it.optString("offerVersionProductGroupId", ""),
+        )
+    }
+
+    return MapArea(
+        x1 = jsonObject.optDouble("x1", 0.0).toFloat(),
+        y1 = jsonObject.optDouble("y1", 0.0).toFloat(),
+        x2 = jsonObject.optDouble("x2", 0.0).toFloat(),
+        y2 = jsonObject.optDouble("y2", 0.0).toFloat(),
+        lineWidth = jsonObject.optInt("lineWidth", 1),
+        color = jsonObject.optString("color", "DeepSkyBlue"),
+        isSelected = jsonObject.optBoolean("isSelected", false),
+        hasAttached = jsonObject.optBoolean("hasAttached", false),
+        contentId = jsonObject.optString("contentId", null),
+        contentType = jsonObject.optString("contentType", null),
+        eventPageContentId = jsonObject.optString("eventPageContentId", null),
+        content = mapAreaContent
+    )
 }
