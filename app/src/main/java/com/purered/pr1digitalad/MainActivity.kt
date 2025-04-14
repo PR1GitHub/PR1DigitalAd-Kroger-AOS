@@ -4,27 +4,11 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.purered.pr1digitalad.ui.theme.PR1DigitalAdTheme
@@ -34,6 +18,7 @@ import com.purered.pr1digitaladclassic.ApiEnv
 import com.purered.pr1digitaladclassic.DigitalAd
 import com.purered.pr1digitaladclassic.DigitalAdLibVersion
 import com.purered.pr1digitaladclassic.SpotClickPayload
+import com.purered.pr1digitaladclassic.ZoomButtonsConfig
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -99,7 +84,7 @@ fun WeeklyAdScreen(
 //    var adId = "bff71115-e620-4dc6-b9c1-14c4b885424d"
 //    var locId = "02100537"
 
-    var adId = "3e41d207-818b-4e65-a07e-8079608b2d2f"
+    var adId = "c9c41911-009c-42e3-a475-fb046f80efda"
     var locId = "02100537"
 
     // QA
@@ -116,6 +101,7 @@ fun WeeklyAdScreen(
         location = locId,
         apiEnv = ApiEnv.PROD,
         apiKey = prodKey,
+        zoomButtonsConfig = ZoomButtonsConfig(enable = false, offsetY = -10),
         onHotSpotClick = {  payload:SpotClickPayload ->
             if (payload.itemType == "promo") {
                 // Handle content type Creative
@@ -126,7 +112,8 @@ fun WeeklyAdScreen(
                 // Handle content type Offer
                 Log.d("Offer Payload -->", payload.toString());
             }
-        })
+        }
+    )
 
 
 

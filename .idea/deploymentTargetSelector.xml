@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="PR1DigitalAd">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-04-07T06:18:51.911760Z">
+        <DropdownSelection timestamp="2025-04-07T06:30:56.503371Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/sridatta/.android/avd/Pixel_6a_API_34.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/sridatta/.android/avd/Pixel_7a_API_33.avd" />
             </handle>
           </Target>
         </DropdownSelection>

@@ -15,9 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import android.util.Log
 
-val DigitalAdLibVersion = "0.0.9" // This is the version of the DigitalAd library
+val DigitalAdLibVersion = "0.0.10" // This is the version of the DigitalAd library
 
 data class SpotClickPayload(
     val itemType: String,
@@ -38,12 +37,20 @@ data class SpotClickPayload(
     val promoEventName:String? = "",
 )
 
+data class ZoomButtonsConfig (
+    val enable: Boolean = true,
+    val offsetY: Int = -140,
+)
+
 @Composable
 fun DigitalAd(
     adId:String,
     location:String,
     apiKey:String,
     apiEnv: ApiEnv,
+    //zoomControls: Boolean = true,
+    //zoomControlsOffset: Int = -140,
+    zoomButtonsConfig: ZoomButtonsConfig = ZoomButtonsConfig(),
     onHotSpotClick: ( payload:SpotClickPayload) -> Unit
 ) {
 
@@ -98,7 +105,8 @@ fun DigitalAd(
                     Box(modifier = Modifier.fillMaxSize()
                     ) {
 
-                        ZoomableBoxContent {
+                        ZoomableBoxContent(
+                            content = {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -126,7 +134,10 @@ fun DigitalAd(
                                 Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = ad.isLogEnabled)
                             }
 
-                        }
+                        },
+                            enableZoomButtons = zoomButtonsConfig.enable, //zoomControls,
+                            zoomButtonOffset = zoomButtonsConfig.offsetY, //zoomControlsOffset
+                        )
                     }
                 }
             }

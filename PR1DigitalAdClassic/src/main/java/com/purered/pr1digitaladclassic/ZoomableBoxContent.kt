@@ -63,7 +63,9 @@ import kotlinx.coroutines.*
 
 @Composable
 fun ZoomableBoxContent(
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
+    enableZoomButtons: Boolean,
+    zoomButtonOffset: Int
 ) {
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
@@ -138,62 +140,76 @@ fun ZoomableBoxContent(
             content()
         }
 
-        //  Zoom Controls (+ and - buttons)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .offset(y=-80.dp)
-                .padding(16.dp),
-            contentAlignment = Alignment.BottomEnd
-        ) {
-            Column(
+        if (enableZoomButtons) {
+            //  Zoom Controls (+ and - buttons)
+            Box(
                 modifier = Modifier
-                .padding(4.dp),
-
-                horizontalAlignment = Alignment.CenterHorizontally
-            ){
-
-
-                FloatingActionButton(
-                    onClick = { scale = (scale + 1f).coerceAtMost(5f) },
+                    .fillMaxSize()
+                    .offset(y = zoomButtonOffset.dp)
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                Column(
                     modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            color = Color.Black.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp, bottomEnd = 0.dp, bottomStart = 0.dp) // Custom corner radii
-                        ),
-                    containerColor = Color.Transparent, // No default color
-                    elevation = FloatingActionButtonDefaults.elevation(0.dp) // Remove shadow
+                        .padding(4.dp),
+
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "+",  // Use "+" or "-" directly
-                        color = Color.White,
-                        fontSize = 30.sp // Adjust size as needed
-                    )
-                }
 
 
-                FloatingActionButton(
-                    onClick = {
-                        scale = (scale - 1f).coerceAtLeast(1f)
-                                            if(scale == 1f){
-                                                offset = Offset.Zero
-                                            }
-                              },
-                    modifier = Modifier
-                        .size(48.dp)
-                        .offset(y = -2.dp)
-                        .background(Color.Black.copy(alpha = 0.5f),
-                            shape =  RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomEnd = 10.dp, bottomStart = 10.dp)), // Transparent button background
-                    containerColor = Color.Transparent,
-                    elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                ) {
-                    Text(
-                        text = "_",  // Use "+" or "‾-_" directly
-                        color = Color.White,
-                        fontSize = 30.sp, // Adjust size as needed
-                        modifier = Modifier.offset(y = -13.dp) // Adjust vertical position
-                    )
+                    FloatingActionButton(
+                        onClick = { scale = (scale + 1f).coerceAtMost(5f) },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(
+                                color = Color.Black.copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(
+                                    topStart = 10.dp,
+                                    topEnd = 10.dp,
+                                    bottomEnd = 0.dp,
+                                    bottomStart = 0.dp
+                                ) // Custom corner radii
+                            ),
+                        containerColor = Color.Transparent, // No default color
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp) // Remove shadow
+                    ) {
+                        Text(
+                            text = "+",  // Use "+" or "-" directly
+                            color = Color.White,
+                            fontSize = 30.sp // Adjust size as needed
+                        )
+                    }
+
+
+                    FloatingActionButton(
+                        onClick = {
+                            scale = (scale - 1f).coerceAtLeast(1f)
+                            if (scale == 1f) {
+                                offset = Offset.Zero
+                            }
+                        },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .offset(y = -2.dp)
+                            .background(
+                                Color.Black.copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(
+                                    topStart = 0.dp,
+                                    topEnd = 0.dp,
+                                    bottomEnd = 10.dp,
+                                    bottomStart = 10.dp
+                                )
+                            ), // Transparent button background
+                        containerColor = Color.Transparent,
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                    ) {
+                        Text(
+                            text = "_",  // Use "+" or "‾-_" directly
+                            color = Color.White,
+                            fontSize = 30.sp, // Adjust size as needed
+                            modifier = Modifier.offset(y = -13.dp) // Adjust vertical position
+                        )
+                    }
                 }
             }
         }
