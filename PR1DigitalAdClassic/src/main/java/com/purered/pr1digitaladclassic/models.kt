@@ -92,6 +92,8 @@ internal data class OfferDetails(
     val disclaimer: String?,
     val webURL: String?,
     val appURL: String?,
+    val isCoupon: Boolean?,
+    val isShoppable: Boolean?,
 
     // Extra attributes coming from API
     val eventId: Int?,

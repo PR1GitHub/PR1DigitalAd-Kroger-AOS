@@ -337,7 +337,9 @@ internal fun AdPageView(
                     webURL = webURLVal,
                     appURL = appURLVal,
                     promoAltText = patVal,
-                    promoEventName = peVal
+                    promoEventName = peVal,
+                    isCoupon = false,
+                    isShoppable = false
                 )
 
                 Logger.i("[PAYLOAD] {Promo} $payload", saveLogs = null, sendToDB = false)
@@ -398,7 +400,9 @@ internal fun AdPageView(
                             category = resOfferDetails.category ?: "",
                             disclaimer = resOfferDetails.disclaimer ?: "",
                             webURL = resOfferDetails.webURL ?: "",
-                            appURL = resOfferDetails.appURL ?: ""
+                            appURL = resOfferDetails.appURL ?: "",
+                            isCoupon = resOfferDetails.isCoupon,
+                            isShoppable = resOfferDetails.isShoppable
                         )
 
                         Logger.i("[PAYLOAD] {Offer} $payload", saveLogs = null, sendToDB = false)
