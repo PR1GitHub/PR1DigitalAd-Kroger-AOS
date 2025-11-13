@@ -386,6 +386,9 @@ internal fun AdPageView(
                         Logger.i("[HOTMAP-LOG]  Entered OfferDetailsList != null condition", saveLogs = null, sendToDB = false)
 
                         val resOfferDetails:OfferDetails = offerDetailsList
+
+                        val appUrlString = resOfferDetails.appURL ?: resOfferDetails.appUrl ?: ""
+
                         val payload = SpotClickPayload(
                             itemType = "offer",
                             id = resOfferDetails.id ?: "0",
@@ -400,7 +403,8 @@ internal fun AdPageView(
                             category = resOfferDetails.category ?: "",
                             disclaimer = resOfferDetails.disclaimer ?: "",
                             webURL = resOfferDetails.webURL ?: "",
-                            appURL = resOfferDetails.appURL ?: "",
+                            //appURL = resOfferDetails.appURL ?: "",
+                            appURL = appUrlString,
                             isCoupon = resOfferDetails.isCoupon,
                             isShoppable = resOfferDetails.isShoppable
                         )
