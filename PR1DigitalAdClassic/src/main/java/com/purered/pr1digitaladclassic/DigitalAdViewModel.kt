@@ -36,7 +36,7 @@ internal class DigitalAdViewModel: ViewModel()  {
                 adId = this.adId!!, loc = this.location!!,
                 appDetails = "AOS:[RELOAD-LOG]  [DigitalAdViewModel.kt]  reloadWeeklyAd() triggered... {adId: $adId, location: $location}"
             ))
-            Logger.i("[RELOAD-LOG]  [DigitalAdViewModel.kt]  reloadWeeklyAd() triggered...", saveLogs = logData, sendToDB = true)
+            Logger.i("[RELOAD-LOG]  [DigitalAdViewModel.kt]  reloadWeeklyAd() triggered...", saveLogs = logData, sendToDB = false)
         }
     }
 
@@ -47,7 +47,7 @@ internal class DigitalAdViewModel: ViewModel()  {
         Logger.i("[API-LOG]  [DigitalAdViewModel.kt]  Entered fetchAdDetails()...", saveLogs = null, sendToDB = false)
 
         val logData = SaveLogs(SaveLogDetails(appDetails = "AOS:[API-LOG] [DigitalAdViewModel.kt]  getAdDetails Api triggered... {adId: $adId, location: $location, apiRequest = https://oms-kroger-webapp-da-classic-api-prod.przone.net/api/dacs/$adId?location=$location}"))
-        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = true)
+        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = false)
 
         viewModelScope.launch{
 

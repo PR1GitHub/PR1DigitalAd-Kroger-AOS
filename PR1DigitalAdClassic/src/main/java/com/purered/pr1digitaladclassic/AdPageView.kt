@@ -51,6 +51,11 @@ import coil.request.SuccessResult
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.toSize
 import coil.imageLoader
 import kotlin.math.floor
@@ -564,7 +569,7 @@ private fun DrawHotMaps(
 
     var hotMapViewModel:HotMapViewModel = viewModel()
     val logData = SaveLogs(SaveLogDetails(appDetails = "AOS:[DRAW-HOTMAP-LOG]  HotMaps receievd by DrawHotMaps() for pageKey($pageKey) = $hotMaps"))
-    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = true)
+    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = false)
 
     if (hotMaps.isEmpty()) {
         return
@@ -598,6 +603,14 @@ private fun DrawHotMaps(
                     .height(bottom - top)
                     .background(Color.Transparent)
                     .border(1.dp, Color.Transparent)
+                    .semantics(mergeDescendants = true) {
+                        role = Role.Button
+                        contentDescription = buildHotspotContentDescription(mapArea)
+                        onClick(label = "Open offer details") {
+                            onMapAreaClick(mapArea)
+                            true
+                        }
+                    }
                     .pointerInput(Unit) {
                         forEachGesture {
                             awaitPointerEventScope {
@@ -651,6 +664,41 @@ private fun DrawHotMaps(
     }
 }
 
+private fun buildAdPageContentDescription(adPage: AdPage?): String {
+    val pageNumber = adPage?.page?.takeIf { it.isNotBlank() }
+    return if (pageNumber != null) {
+        "Weekly ad page $pageNumber"
+    } else {
+        "Weekly ad page"
+    }
+}
+
+private fun buildHotspotContentDescription(mapArea: MapArea): String {
+    val content = mapArea.content
+    //Log.i("buildHotspotContentDescription", "mapArea: $mapArea, content: $content")
+
+    val contentType = mapArea.contentType?.lowercase()
+    var talkbackString = ""
+
+    if (contentType == "creative") {
+        val altText = content?.altText?.takeIf { it.isNotBlank() }
+        // ToDo : Need to work on object parsing to avoid string null check
+        talkbackString = if (altText != null && altText != "null") {
+            "Promotional offer, $altText"
+        } else {
+            "Promotional offer image"
+        }
+    } else {
+        val headline = content?.headline?.takeIf { it.isNotBlank() }
+        talkbackString = if (headline != null) {
+            "Offer on, $headline"
+        } else {
+            "Offer"
+        }
+    }
+
+    return talkbackString
+}
 
 internal fun convertJsonToMapArea(jsonString: String): MapArea {
     val jsonObject = JSONObject(jsonString)

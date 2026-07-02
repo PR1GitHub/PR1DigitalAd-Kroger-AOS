@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -21,6 +22,11 @@ import com.purered.pr1digitaladclassic.ApiEnv
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 
 
 import com.purered.pr1digitaladclassic.DigitalAd
@@ -29,12 +35,26 @@ import com.purered.pr1digitaladclassic.SpotClickPayload
 import com.purered.pr1digitaladclassic.ZoomButtonsConfig
 
 class MainActivity : ComponentActivity() {
+
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //enableEdgeToEdge()
         setContent {
             PR1DigitalAdTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        CenterAlignedTopAppBar(
+                            title = {
+                                Text("Weekly Ad Demo")
+                            },
+                            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                containerColor = Color.LightGray,
+                                titleContentColor = Color.Black
+                            )
+                        )
+                    }
+                ) { innerPadding ->
                     WeeklyAdScreen(
                         modifier = Modifier.padding(innerPadding)
                     )
@@ -58,7 +78,7 @@ fun WeeklyAdScreen(
     modifier: Modifier = Modifier) {
 
     // PROD
-    var adId = "f7bf2729-8d16-4b22-8062-b5f23e0d5cfc"
+    var adId = "c9e1dae8-f3c4-4178-8a31-bace4546619b"
     var locId = "02100537"
 
     var stagingKey = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2"
@@ -70,28 +90,33 @@ fun WeeklyAdScreen(
     var showDialog by remember { mutableStateOf(false) }
     var dialogPayload by remember { mutableStateOf<SpotClickPayload?>(null) }
 
-    DigitalAd(
-        adId = adId,
-        location = locId,
-        apiEnv = ApiEnv.PROD,
-        apiKey = prodKey,
-        zoomButtonsConfig = ZoomButtonsConfig(enable = false, offsetY = -10),
-        onHotSpotClick = {  payload:SpotClickPayload ->
-            if (payload.itemType == "promo") {
-                // Handle content type Creative
-                Log.d("Promo Payload -->", payload.toString());
-            }
 
-            if (payload.itemType == "offer") {
-                // Handle content type Offer
-                Log.d("Offer Payload -->", payload.toString());
-            }
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
+        DigitalAd(
+            adId = adId,
+            location = locId,
+            apiEnv = ApiEnv.PROD,
+            apiKey = prodKey,
+            zoomButtonsConfig = ZoomButtonsConfig(enable = false, offsetY = -10),
+            onHotSpotClick = { payload: SpotClickPayload ->
+                if (payload.itemType == "promo") {
+                    // Handle content type Creative
+                    Log.d("Promo Payload -->", payload.toString());
+                }
 
-            // Show dialog
-            dialogPayload = payload
-            showDialog = false // make true to visually see the payload in a alert box (for dev only)
-        }
-    )
+                if (payload.itemType == "offer") {
+                    // Handle content type Offer
+                    Log.d("Offer Payload -->", payload.toString());
+                }
+
+                // Show dialog
+                dialogPayload = payload
+                showDialog = true // make true to visually see the payload in a alert box (for dev only)
+            }
+        )
+    }
 
     // Compose AlertDialog
     if (showDialog && dialogPayload != null) {

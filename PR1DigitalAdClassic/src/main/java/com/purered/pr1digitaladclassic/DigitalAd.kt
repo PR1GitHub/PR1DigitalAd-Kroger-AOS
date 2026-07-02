@@ -1,5 +1,6 @@
 package com.purered.pr1digitaladclassic
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -89,7 +90,7 @@ fun DigitalAd(
                     adId = adId, loc = location,
                     appDetails = "AOS:[LOG] [DigitalAd.kt]  Something went wrong. Please try again. {adId: $adId, location: $location}"
                 ))
-                Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = true)
+                Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = false)
             }
             else -> {
                 if(viewState.WeeklyAd != null) {
@@ -128,6 +129,8 @@ fun DigitalAd(
                                             saveLogEnabled = ad.isLogEnabled
                                         )
                                 }
+
+                                Log.i("isLogEnabled", "ad.isLogEnabled = ${ad.isLogEnabled}")
 
                                 val logData = SaveLogs(SaveLogDetails(
                                     adId = adId, loc = location,

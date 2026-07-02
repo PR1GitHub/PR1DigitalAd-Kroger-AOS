@@ -83,14 +83,14 @@ internal fun convertHotMapsToDisplaySize(
         val logData = SaveLogs(SaveLogDetails(
             appDetails = "AOS:[Utils > convertHotMapsToDisplaySize()]  hotMaps received to method = $hotMaps"
         ))
-        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = true)
+        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = false)
 
         val convertedHotMaps = hotMaps.map { mapArea ->
 
             val logData = SaveLogs(SaveLogDetails(
                 appDetails = "AOS:[Utils > convertHotMapsToDisplaySize()]  {pageId: } hotMaps BEFORE convertion = $mapArea"
             ))
-            Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = true)
+            Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = false)
 
             val logData1 = SaveLogs(SaveLogDetails(
                 appDetails = "AOS:[[Utils > convertHotMapsToDisplaySize()]  {pageId: } hotMaps AFTER convertion = ${mapArea.copy(
@@ -100,7 +100,7 @@ internal fun convertHotMapsToDisplaySize(
                     y2 = mapArea.y2 * scaleY
                 )}"
             ))
-            Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = true)
+            Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = false)
 
             mapArea.copy(
                 x1 = mapArea.x1 * scaleX,

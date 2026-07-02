@@ -83,8 +83,9 @@ internal fun MapAreaContentView(
             if (offerDetails?.imageURL != null) {
 
                 SubcomposeAsyncImage(
-                    model = offerDetails?.imageURL,
-                    contentDescription = null,
+                    model = offerDetails.imageURL,
+                    contentDescription = offerDetails.headline?.takeIf { it.isNotBlank() }
+                        ?: "Offer image",
                     loading = {
                         Box(
                             modifier = Modifier
