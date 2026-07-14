@@ -1,19 +1,17 @@
 package com.purered.pr1digitaladclassic
 
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
-import retrofit2.http.POST // newly added
-import retrofit2.http.Body // newly added
-
-internal class DigitalAdApi {
-}
+internal class DigitalAdApi
 
 enum class ApiEnv {
     PROD,
@@ -63,17 +61,13 @@ internal fun createRetrofit(environment: ApiEnv, apiKey: String): Retrofit {
 //        .build()
 //}
 
-internal fun createWeeklyAdService(environment: ApiEnv,apiKey: String): ApiService {
-    val retrofit = createRetrofit(environment,apiKey)
+internal fun createWeeklyAdService(environment: ApiEnv, apiKey: String): ApiService {
+    val retrofit = createRetrofit(environment, apiKey)
     return retrofit.create(ApiService::class.java)
 }
 
 
-internal  var weeklyAdService = createWeeklyAdService(ApiEnv.QA,"pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2");
-
-
-
-
+internal  var weeklyAdService = createWeeklyAdService(ApiEnv.QA,"pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2")
 
 
 //private  val  retrofit = Retrofit.Builder().baseUrl("https://oms-kroger-webapp-da-classic-api-qa.azurewebsites.net/api/")

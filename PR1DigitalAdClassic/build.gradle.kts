@@ -1,17 +1,19 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 //plugins {
 //    alias(libs.plugins.android.library)
 //    alias(libs.plugins.jetbrains.kotlin.android)
 //}
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.library)
     id("maven-publish")
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.purered.pr1digitaladclassic"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -30,19 +32,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-
     buildFeatures {
         compose = true
     }
+}
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.7"
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -74,22 +74,22 @@ publishing{
 
 dependencies {
 
-    implementation ("androidx.core:core-ktx:1.8.21")
-    implementation (platform("androidx.compose:compose-bom:2023.05.01"))
-    implementation ("androidx.compose.ui:ui")
-    implementation ("androidx.compose.ui:ui-tooling-preview")
-    debugImplementation ("androidx.compose.ui:ui-tooling")
-    implementation ("androidx.activity:activity-compose:1.5.1")
-    implementation ("androidx.appcompat:appcompat:1.6.1")
-    implementation ("com.google.android.material:material:1.12.0")
-    testImplementation ("junit:junit:4.13.2")
-    androidTestImplementation ("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation ("androidx.test.espresso:espresso-core:3.5.1")
-    implementation ("io.coil-kt:coil-compose:2.4.0")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation ("com.google.dagger:hilt-android:2.45")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation (libs.androidx.core.ktx)
+    implementation (platform(libs.androidx.compose.bom))
+    implementation (libs.androidx.compose.ui)
+    implementation (libs.androidx.compose.ui.tooling.preview)
+    debugImplementation (libs.androidx.compose.ui.tooling)
+    implementation (libs.androidx.activity.compose)
+    implementation (libs.androidx.appcompat)
+    implementation (libs.material)
+    testImplementation (libs.junit)
+    androidTestImplementation (libs.androidx.junit)
+    androidTestImplementation (libs.androidx.espresso.core)
+    implementation (libs.coil.compose)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation (libs.hilt.android)
+    implementation(libs.kotlinx.serialization.json)
 }

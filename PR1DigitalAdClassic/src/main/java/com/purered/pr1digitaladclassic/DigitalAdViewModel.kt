@@ -1,16 +1,14 @@
 package com.purered.pr1digitaladclassic
 
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
-import androidx.lifecycle.ViewModel
-
 internal  data class DigitalAdState(
     val loading : Boolean = true,
-    val WeeklyAd : WeeklyAd?=null,
+    val weeklyAd : WeeklyAd?=null,
     val error : String? = null
 )
 
@@ -19,7 +17,7 @@ internal class DigitalAdViewModel: ViewModel()  {
 
     private val _weeklyAdState = mutableStateOf(DigitalAdState())
 
-    val digitalAdState: State<DigitalAdState> = _weeklyAdState;
+    val digitalAdState: State<DigitalAdState> = _weeklyAdState
 
     private var adId:String?=null
     private var location:String?=null
@@ -56,7 +54,7 @@ internal class DigitalAdViewModel: ViewModel()  {
 
                 _weeklyAdState.value = _weeklyAdState.value.copy(
                     loading = false,
-                    WeeklyAd = response,
+                    weeklyAd = response,
                     error = null
                 )
 

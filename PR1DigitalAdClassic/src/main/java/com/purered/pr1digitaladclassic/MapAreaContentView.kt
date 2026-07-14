@@ -80,7 +80,7 @@ internal fun MapAreaContentView(
             .height(100.dp)
             .padding(horizontal = Dimens.MediumPadding1)
         ) {
-            if (offerDetails?.imageURL != null) {
+            if (offerDetails.imageURL != null) {
 
                 SubcomposeAsyncImage(
                     model = offerDetails.imageURL,
@@ -113,19 +113,19 @@ internal fun MapAreaContentView(
             }
         }
         Text(
-            formatEventDates(offerDetails?.startDate, offerDetails?.endDate),
+            formatEventDates(offerDetails.startDate, offerDetails.endDate),
             style = MaterialTheme.typography.labelSmall
         )
         Text(
-            parseHtmlString(offerDetails?.pricingTemplateName ?: ""),
+            parseHtmlString(offerDetails.pricingTemplateName ?: ""),
             style = MaterialTheme.typography.headlineMedium
         )
         Text(
-            offerDetails?.headline ?: "",
+            offerDetails.headline ?: "",
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
         )
         Text(
-            offerDetails?.bodyCopy ?: "",
+            offerDetails.bodyCopy ?: "",
             style = MaterialTheme.typography.bodySmall
         )
         Row(
@@ -142,10 +142,10 @@ internal fun MapAreaContentView(
         }
 
         Text(
-            (offerDetails?.offerDisclaimer ?: "" )
-                    + (offerDetails?.eventDisclaimer ?: "")
+            (offerDetails.offerDisclaimer ?: "" )
+                    + (offerDetails.eventDisclaimer ?: "")
                     +"In the event of disagreement between the flyer and this popup, the flyer shall take precedence."
-                    +(offerDetails?.genericDisclaimer ?: "")
+                    +(offerDetails.genericDisclaimer ?: "")
             ,
             style = MaterialTheme.typography.labelSmall
         )

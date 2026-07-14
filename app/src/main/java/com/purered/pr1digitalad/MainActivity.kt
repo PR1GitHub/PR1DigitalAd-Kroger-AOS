@@ -1,5 +1,6 @@
 package com.purered.pr1digitalad
 
+
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -7,28 +8,23 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.purered.pr1digitalad.ui.theme.PR1DigitalAdTheme
 import com.purered.pr1digitaladclassic.ApiEnv
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-
-
 import com.purered.pr1digitaladclassic.DigitalAd
 import com.purered.pr1digitaladclassic.DigitalAdLibVersion
 import com.purered.pr1digitaladclassic.SpotClickPayload
@@ -84,7 +80,7 @@ fun WeeklyAdScreen(
     var stagingKey = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2"
     var prodKey = "bqwwosbzrzcvffztxzyczieljzsahmkp"
 
-    Log.i("PR1DigitalAd-AOS-SDK","PR1DigitalAd Version = v$DigitalAdLibVersion");
+    Log.i("PR1DigitalAd-AOS-SDK","PR1DigitalAd Version = v$DigitalAdLibVersion")
 
     // State for showing dialog + holding payload
     var showDialog by remember { mutableStateOf(false) }
@@ -103,12 +99,12 @@ fun WeeklyAdScreen(
             onHotSpotClick = { payload: SpotClickPayload ->
                 if (payload.itemType == "promo") {
                     // Handle content type Creative
-                    Log.d("Promo Payload -->", payload.toString());
+                    Log.d("Promo Payload -->", payload.toString())
                 }
 
                 if (payload.itemType == "offer") {
                     // Handle content type Offer
-                    Log.d("Offer Payload -->", payload.toString());
+                    Log.d("Offer Payload -->", payload.toString())
                 }
 
                 // Show dialog

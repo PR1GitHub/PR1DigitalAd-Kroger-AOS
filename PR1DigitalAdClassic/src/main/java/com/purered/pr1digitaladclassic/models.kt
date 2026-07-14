@@ -76,7 +76,7 @@ internal data class MapAreaContent(
 /*-- OFFER DETAILS --*/
 internal data class OfferDetails(
 
-    // By Default All are optional atrributes, should be validated when converting to SpotClickPayload,
+    // By Default All are optional attributes, should be validated when converting to SpotClickPayload,
 
     // Attributes will be exposed to Client
     val id: String?,

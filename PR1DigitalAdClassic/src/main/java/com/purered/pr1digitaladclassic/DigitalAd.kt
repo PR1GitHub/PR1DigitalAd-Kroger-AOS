@@ -17,7 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-val DigitalAdLibVersion = "0.0.12" // This is the version of the DigitalAd library
+const val DigitalAdLibVersion = "0.0.12" // This is the version of the DigitalAd library
 
 data class SpotClickPayload(
     val itemType: String,
@@ -59,7 +59,7 @@ fun DigitalAd(
 
     weeklyAdService = createWeeklyAdService(apiEnv,apiKey)
 
-    val mode = "public"
+    //val mode = "public"
     val weeklyAdViewModel: DigitalAdViewModel = viewModel()
     val viewState by weeklyAdViewModel.digitalAdState
 
@@ -93,10 +93,10 @@ fun DigitalAd(
                 Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = false)
             }
             else -> {
-                if(viewState.WeeklyAd != null) {
+                if(viewState.weeklyAd != null) {
                     //WeeklyAdItem(ad = viewState.WeeklyAd!!)
 
-                    val ad = viewState.WeeklyAd!!;
+                    val ad = viewState.weeklyAd!!
 
                     val logData = SaveLogs(SaveLogDetails(
                         adId = adId, loc = location,
@@ -118,7 +118,7 @@ fun DigitalAd(
                                 // Add verticalScroll modifier
                                 ad.pages.forEachIndexed { index, adPage ->
                                     // Pass each AdPage to a separate AdPageView
-                                    if(adPage.fileURL.isNotEmpty() == true)
+                                    if(adPage.fileURL.isNotEmpty())
                                         AdPageView(
                                             adPage = adPage,
                                             modifier = Modifier,

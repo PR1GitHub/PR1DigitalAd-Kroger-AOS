@@ -3,9 +3,6 @@ package com.purered.pr1digitaladclassic
 import android.content.Context
 import android.util.DisplayMetrics
 import android.view.WindowManager
-import java.text.SimpleDateFormat
-import java.util.Locale
-
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -21,6 +18,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 internal object Dimens {
 
@@ -77,8 +76,8 @@ internal fun convertHotMapsToDisplaySize(
     }
     try {
 
-        val scaleX = if (originalImageWidth != 0f) displayWidth / originalImageWidth else 1f
-        val scaleY = if (originalImageHeight != 0f) displayHeight / originalImageHeight else 1f
+        val scaleX = displayWidth / originalImageWidth
+        val scaleY = displayHeight / originalImageHeight
 
         val logData = SaveLogs(SaveLogDetails(
             appDetails = "AOS:[Utils > convertHotMapsToDisplaySize()]  hotMaps received to method = $hotMaps"
@@ -130,8 +129,6 @@ internal fun convertHotMapsToDisplaySize(
         println(e)
         return emptyList()
     }
-
-
 }
 
 internal fun getScreenWidth(context: Context): Int {
@@ -159,7 +156,7 @@ internal fun parseHtmlString(input: String): AnnotatedString {
             .replace("</font>", "")
 
         return AnnotatedString(formattedString)
-    }catch (e: Exception) {
+    }catch (_: Exception) {
         println("Error parsing date")
         return AnnotatedString("")
     }
@@ -187,11 +184,17 @@ internal fun formatEventDates(startDateString: String?, endDateString: String?):
         val endDate = inputFormat.parse(endDateString)
 
         // Format the start and end dates
-        val startMonth = outputMonthFormat.format(startDate)
+     /*   val startMonth = outputMonthFormat.format(startDate)
         val startDay = outputDayFormat.format(startDate).toInt()
         val endMonth = outputMonthFormat.format(endDate)
         val endDay = outputDayFormat.format(endDate).toInt()
-        val year = outputYearFormat.format(endDate)
+        val year = outputYearFormat.format(endDate)*/
+
+        val startMonth = startDate?.let { outputMonthFormat.format(it) }
+        val startDay = startDate?.let { outputDayFormat.format(it).toInt() } ?: 0
+        val endMonth = endDate?.let { outputMonthFormat.format(it) }
+        val endDay = endDate?.let { outputDayFormat.format(it).toInt() } ?: 0
+        val year = endDate?.let { outputYearFormat.format(it) }
 
         // Get the day suffixes
         val startDaySuffix = getDayOfMonthSuffix(startDay)
@@ -199,7 +202,7 @@ internal fun formatEventDates(startDateString: String?, endDateString: String?):
 
         return "$startMonth $startDay$startDaySuffix - $endMonth $endDay$endDaySuffix, $year"
 
-    }catch (e: Exception) {
+    }catch (_: Exception) {
         println("Error parsing date")
         return ""
     }
