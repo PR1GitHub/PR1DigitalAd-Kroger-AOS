@@ -86,7 +86,6 @@ fun WeeklyAdScreen(
     var showDialog by remember { mutableStateOf(false) }
     var dialogPayload by remember { mutableStateOf<SpotClickPayload?>(null) }
 
-
     Box(modifier = modifier.fillMaxSize()) {
         DigitalAd(
             adId = adId,
