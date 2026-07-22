@@ -188,12 +188,5 @@ fun ZoomableBoxContent(
                 }
             }
         }
-
-
-
-
-
-
-
     }
 }
