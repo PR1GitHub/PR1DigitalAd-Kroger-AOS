@@ -110,7 +110,51 @@ fun DigitalAd(
 
                     Box(modifier = Modifier.fillMaxSize()) {
 
-                        if(isHorizontalView){
+                        val scrollModifier = if (isHorizontalView) {
+                            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+                        } else {
+                            Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                        }
+
+                        ZoomableBoxContent(
+                            content = {
+                                val container: @Composable (@Composable () -> Unit) -> Unit =
+                                    if (isHorizontalView) { { Row(modifier = scrollModifier) { it() } } }
+                                    else { { Column(modifier = scrollModifier) { it() } } }
+
+                                container {
+                                    ad.pages.forEachIndexed { index, adPage ->
+                                        if (adPage.fileURL.isNotEmpty()) {
+                                            AdPageView(
+                                                adPage = adPage,
+                                                modifier = Modifier,
+                                                adId = adId,
+                                                location = location,
+                                                onHotSpotClick = onHotSpotClick,
+                                                key = index,
+                                                saveLogEnabled = ad.isLogEnabled
+                                            )
+                                        }
+                                    }
+
+                                    Log.i("isLogEnabled", "ad.isLogEnabled = ${ad.isLogEnabled}")
+
+                                    val logData = SaveLogs(
+                                        SaveLogDetails(
+                                            adId = adId,
+                                            loc = location,
+                                            appDetails = "AOS:[LOG] [DigitalAd.kt] Generating AdPageView... {adId: $adId, location: $location}"
+                                        )
+                                    )
+                                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = ad.isLogEnabled)
+                                }
+                            },
+                            enableZoomButtons = zoomButtonsConfig.enable,
+                            zoomButtonOffset = zoomButtonsConfig.offsetY,
+                        )
+
+
+                        /*if(isHorizontalView){
                             ZoomableBoxContent(
                                 content = {
                                     Row(
@@ -180,7 +224,7 @@ fun DigitalAd(
                                 enableZoomButtons = zoomButtonsConfig.enable, //zoomControls,
                                 zoomButtonOffset = zoomButtonsConfig.offsetY, //zoomControlsOffset
                             )
-                        }
+                        }*/
                     }
                 }
             }
