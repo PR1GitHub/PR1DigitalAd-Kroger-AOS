@@ -62,7 +62,7 @@ internal fun createRetrofit(environment: ApiEnv, apiKey: String): Retrofit {
 //}
 
 internal fun createWeeklyAdService(environment: ApiEnv, apiKey: String): ApiService {
-    val retrofit = createRetrofit(environment, apiKey)
+    val retrofit = createRetrofit(environment,apiKey)
     return retrofit.create(ApiService::class.java)
 }
 
@@ -109,7 +109,7 @@ internal interface ApiService{
         @Path("adId") adId: String,
         @Path("offerId") offerId: String,
         @Query("location") location: String
-    ):OfferDetails
+    ):OfferDetails?
 
 
     //    https://oms-kroger-webapp-da-classic-api-qa.azurewebsites.net/api/dacs/savelogs

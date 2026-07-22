@@ -461,7 +461,7 @@ internal fun AdPageView(
             }, onSuccess = { _ ->
                 imageState = "success"
             })
-        if (imageState== "success" && convertedHotMaps.isNotEmpty()) {
+        if (imageState == "success" && convertedHotMaps.isNotEmpty()) {
 
             //  println(" DrawHotMaps DrawHotMaps DrawHotMaps DrawHotMaps")
 
@@ -517,7 +517,7 @@ internal fun AdPageView(
                     .background(Color.Black.copy(alpha = 0.6f))  // Set the background color
             ) {
                 CircularProgressIndicator(
-                    progress = 0.85F,
+                    progress = {0.85F},
                     modifier = Modifier.align(Alignment.Center)  // Center the progress indicator
                 )
             }
@@ -702,9 +702,9 @@ internal fun convertJsonToMapArea(jsonString: String): MapArea {
         color = jsonObject.optString("color", "DeepSkyBlue"),
         isSelected = jsonObject.optBoolean("isSelected", false),
         hasAttached = jsonObject.optBoolean("hasAttached", false),
-        contentId = jsonObject.optString("contentId", null),
-        contentType = jsonObject.optString("contentType", null),
-        eventPageContentId = jsonObject.optString("eventPageContentId", null),
+        contentId = jsonObject.optString("contentId", ""),
+        contentType = jsonObject.optString("contentType", ""),
+        eventPageContentId = jsonObject.optString("eventPageContentId", ""),
         content = mapAreaContent
     )
 }

@@ -74,7 +74,7 @@ fun DigitalAd(
             viewState.loading -> {
                 Logger.i("[API-LOG]  Loading...", saveLogs = null, sendToDB = false)
                 CircularProgressIndicator(
-                    progress = 0.85F,
+                    progress = { 0.85F },
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
@@ -105,8 +105,7 @@ fun DigitalAd(
                     Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = ad.isLogEnabled)
 
 
-                    Box(modifier = Modifier.fillMaxSize()
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
 
                         ZoomableBoxContent(
                             content = {

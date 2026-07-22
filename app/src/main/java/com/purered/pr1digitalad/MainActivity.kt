@@ -74,11 +74,11 @@ fun WeeklyAdScreen(
     modifier: Modifier = Modifier) {
 
     // PROD
-    var adId = "c9e1dae8-f3c4-4178-8a31-bace4546619b"
-    var locId = "02100537"
+    val adId = "e5da59f5-8874-4888-a956-7bb674380ffa"// "c9e1dae8-f3c4-4178-8a31-bace4546619b"
+    val locId = "02100537"
 
-    var stagingKey = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2"
-    var prodKey = "bqwwosbzrzcvffztxzyczieljzsahmkp"
+    val stagingKey = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2"
+    val prodKey = "bqwwosbzrzcvffztxzyczieljzsahmkp"
 
     Log.i("PR1DigitalAd-AOS-SDK","PR1DigitalAd Version = v$DigitalAdLibVersion")
 
@@ -87,9 +87,7 @@ fun WeeklyAdScreen(
     var dialogPayload by remember { mutableStateOf<SpotClickPayload?>(null) }
 
 
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
         DigitalAd(
             adId = adId,
             location = locId,
