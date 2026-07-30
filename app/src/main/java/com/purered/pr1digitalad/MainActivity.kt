@@ -74,7 +74,7 @@ fun WeeklyAdScreen(
     modifier: Modifier = Modifier) {
 
     // PROD
-    val adId = "e5da59f5-8874-4888-a956-7bb674380ffa" // "e5da59f5-8874-4888-a956-7bb674380ffa"// "c9e1dae8-f3c4-4178-8a31-bace4546619b"
+    val adId = "2933c95f-0874-4c0d-bcf7-0c41a8ec5d0e" // "e5da59f5-8874-4888-a956-7bb674380ffa"// "c9e1dae8-f3c4-4178-8a31-bace4546619b"
     val locId = "02100537"
 
     val stagingKey = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2"
@@ -92,6 +92,7 @@ fun WeeklyAdScreen(
             location = locId,
             apiEnv = ApiEnv.PROD,
             apiKey = prodKey,
+            isHorizontalView = true,
             zoomButtonsConfig = ZoomButtonsConfig(enable = false, offsetY = -10),
             onHotSpotClick = { payload: SpotClickPayload ->
                 if (payload.itemType == "promo") {
