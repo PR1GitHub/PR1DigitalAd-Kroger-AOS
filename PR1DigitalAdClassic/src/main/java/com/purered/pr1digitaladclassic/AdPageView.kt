@@ -16,8 +16,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,21 +53,20 @@ import kotlin.math.floor
 internal fun AdPageView(
     modifier: Modifier = Modifier,
     adPage: AdPage? = null,
-    adId:String,
-    location:String,
-    onHotSpotClick: ( payload:SpotClickPayload) -> Unit,
+    adId: String,
+    location: String,
+    onHotSpotClick: (payload: SpotClickPayload) -> Unit,
     key: Int,
-    saveLogEnabled: Boolean
+    saveLogEnabled: Boolean,
 ) {
-    var imageWidth by remember { mutableFloatStateOf(0f) }
-    var imageHeight by remember { mutableFloatStateOf(0f) }
+    var imageWidth by remember { mutableStateOf(0f) }
+    var imageHeight by remember { mutableStateOf(0f) }
     var imageState by remember { mutableStateOf("loading") }
     var displaySize by remember { mutableStateOf(Size.Zero) }
     var dpiImageWidth by remember { mutableStateOf(0.dp) }
     var dpiImageHeight by remember { mutableStateOf(0.dp) }
-    //var offerDetails by remember { mutableStateOf<OfferDetails?>(null) }
-    //val gson = Gson()
     val coroutineScope = rememberCoroutineScope()
+    var pageHotMaps by remember { mutableStateOf(emptyList<MapArea>()) }
     var convertedHotMaps by remember { mutableStateOf(emptyList<MapArea>()) }
     var isOfferLoading by remember { mutableStateOf(false) }
 
@@ -82,17 +79,12 @@ internal fun AdPageView(
     val wDp = pixelsToDp(displaySize.width)
     val hDp = pixelsToDp(displaySize.height)
 
-    val weeklyAdViewModel: DigitalAdViewModel = viewModel()
-
     LaunchedEffect(fileUrl) {
-
         val adPageId = adPage?.eventPageId
-
         if (adPageId != null) {
             Logger.i("[LOG]  Entered adPageId($adPageId) != null condition", saveLogs = null, sendToDB = false)
             try {
-
-                val adPageData: AdPage = weeklyAdService.getPageDetails(adId=adId, pageId = adPageId, location = location)
+                val adPageData: AdPage = weeklyAdService.getPageDetails(adId = adId, pageId = adPageId, location = location)
 
                 val logData = SaveLogs(SaveLogDetails(
                     adId = adId, loc = location,
@@ -100,20 +92,7 @@ internal fun AdPageView(
                 ))
                 Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
-                val logData1 = SaveLogs(SaveLogDetails(
-                    adId = adId, loc = location,
-                    appDetails = "AOS:[API-LOG-GetPageDetails]  {adPageId: $adPageId} getPageDetails Api response :: $adPageData"
-                ))
-                Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = saveLogEnabled)
-
                 if (adPageData.contents.isNotEmpty()) {
-
-                    val logData = SaveLogs(SaveLogDetails(
-                        adId = adId, loc = location,
-                        appDetails = "AOS:[API-LOG-GetPageDetails] [AdPageView.kt]  getPageDetails Api SUCCESS {adId = $adId, eventPageId = $adPageId, location = $location}"
-                    ))
-                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
-
                     val logData1 = SaveLogs(SaveLogDetails(
                         adId = adId, loc = location,
                         appDetails = "AOS:[LOG-GetPageDetails]  {adPageId: $adPageId} Entered adPageData.contents.isNotEmpty() condition."
@@ -122,124 +101,54 @@ internal fun AdPageView(
 
                     val request = ImageRequest.Builder(context)
                         .data(fileUrl)
-                        .size(coil.size.Size.ORIGINAL) // Ensure original dimensions are fetched
+                        .size(coil.size.Size.ORIGINAL)
                         .build()
                     val result = (context.imageLoader.execute(request) as SuccessResult).drawable
                     imageWidth = result.intrinsicWidth.toFloat()
                     imageHeight = result.intrinsicHeight.toFloat()
 
-                    /*
-                    println("Original Image Size: width: $imageWidth, height: $imageHeight")
-                    println("Display Size: width: ${displaySize.width}, height: ${displaySize.height}")
-                    println("Display Size inDPI : width: ${dpiimageWidth.value}, height: ${dpiimageHeight.value}")
-                    */
-
-                    var pagehotMaps: List<MapArea> = emptyList()
-
-                    val logData2 = SaveLogs(SaveLogDetails(
-                        adId = adId, loc = location,
-                        appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Conversion started for pageId: ${adPageData.eventPageId}"
-                    ))
-                    Logger.i("${logData2.value.appDetails}", saveLogs = logData2, sendToDB = saveLogEnabled)
-
+                    var localPageHotMaps: List<MapArea> = emptyList()
                     adPageData.contents.forEachIndexed { index, pageContent ->
-
-                        val logData = SaveLogs(SaveLogDetails(
-                            adId = adId, loc = location,
-                            appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Conversion in-progress for mapArea at index = $index with pageContent = $pageContent"
-                        ))
-                        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
-
                         try {
-                            val jsonString = pageContent.mapConfig
-                            Logger.d("jsonString at index($index): $jsonString", saveLogs = null, sendToDB = false)
-
-                            val mapArea = convertJsonToMapArea(jsonString)
-                            Logger.i("convertJsonToMapArea at index($index): $mapArea", saveLogs = null, sendToDB = false)
-
-                            pagehotMaps = pagehotMaps + mapArea
-
-                            val logData1 = SaveLogs(SaveLogDetails(
-                                adId = adId, loc = location,
-                                appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Conversion completed for mapArea at index = $index ;; mapArea = $mapArea"
-                            ))
-                            Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = saveLogEnabled)
-                        }
-                        catch (_: Exception) {
+                            val mapArea = convertJsonToMapArea(pageContent.mapConfig)
+                            localPageHotMaps = localPageHotMaps + mapArea
+                        } catch (_: Exception) {
                             Logger.i("AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Conversion for mapArea at index = $index FAILED", saveLogs = null, sendToDB = false)
                         }
-
-                        /*
-                        val mapArea = gson.fromJson(pageContent.mapConfig, MapArea::class.java)
-                        pagehotMaps = pagehotMaps + mapArea
-
-                        val logData1 = SaveLogs(SaveLogDetails(
-                            adId = adId, loc = location,
-                            appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Conversion completed for mapArea at index = $index ;; mapArea = $mapArea"
-                        ))
-                        Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = saveLogEnabled)
-                        */
                     }
-
-                    val logData3 = SaveLogs(SaveLogDetails(
-                        adId = adId, loc = location,
-                        appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Conversion completed for pageId: ${adPageData.eventPageId}"
-                    ))
-                    Logger.i("${logData3.value.appDetails}", saveLogs = logData3, sendToDB = saveLogEnabled)
-
-                    val logData4 = SaveLogs(SaveLogDetails(
-                        adId = adId, loc = location,
-                        appDetails = "AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  {pageId: ${adPageData.eventPageId}} pagehotMaps = $pagehotMaps"
-                    ))
-                    Logger.i("${logData4.value.appDetails}", saveLogs = logData4, sendToDB = saveLogEnabled)
-
-                    if (imageWidth > 0f && imageHeight > 0f && dpiImageWidth > 0.dp && dpiImageHeight > 0.dp) {
-
-                        convertedHotMaps = convertHotMapsToDisplaySize(
-                            hotMaps = pagehotMaps,
-                            originalImageWidth = imageWidth,
-                            originalImageHeight = imageHeight,
-                            displayWidth = dpiImageWidth.value,
-                            displayHeight = dpiImageHeight.value
-                        )
-
-                        val logData = SaveLogs(SaveLogDetails(
-                            adId = adId, loc = location,
-                            appDetails = "AOS:[PAGE-HOTMAPS-SCALE_DOWN-GetPageDetails] [AdPageView.kt]  {pageId: ${adPageData.eventPageId}} convertedHotMaps = $convertedHotMaps"
-                        ))
-                        Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
-                    }
-
-                }
-                else{
-                    println(" Noooo Hot Maps")
-
+                    pageHotMaps = localPageHotMaps
+                } else {
                     val logData = SaveLogs(SaveLogDetails(
                         adId = adId, loc = location,
-                        appDetails = "AOS:[API-LOG-GetPageDetails] [AdPageView.kt]  getPageDetails Api success but entered adPageData.contents.isEmpty() condition. NO Hot Maps ;; {adId = $adId, eventPageId = $adPageId, location = $location, apiRequest = https://oms-kroger-webapp-da-classic-api-prod.przone.net/api/dacs/$adId/pages/$adPageId?location=$location }"
+                        appDetails = "AOS:[API-LOG-GetPageDetails] [AdPageView.kt]  getPageDetails Api success but entered adPageData.contents.isEmpty() condition. NO Hot Maps"
                     ))
                     Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
-
                 }
-
-            } catch (e: Exception) {
-                println("PAGE DETAILES Loading Failed")
-                println(e)
-
+            } catch (_: Exception) {
                 val logData = SaveLogs(SaveLogDetails(
                     adId = adId, loc = location,
-                    appDetails = "AOS:[API-LOG-GetPageDetails]  getPageDetails Api FAILED. {adId = $adId, eventPageId = $adPageId, location = $location, apiRequest = https://oms-kroger-webapp-da-classic-api-prod.przone.net/api/dacs/$adId/pages/$adPageId?location=$location}}"
+                    appDetails = "AOS:[API-LOG-GetPageDetails]  getPageDetails Api FAILED. {adId = $adId, eventPageId = $adPageId, location = $location}"
                 ))
                 Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
-
             }
-
         }
-        else{
-            val logData = SaveLogs(SaveLogDetails(adId = adId, loc = location, appDetails = "AOS:[LOG]  Entered adPageId == null condition."))
-            Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
-        }
+    }
 
+    LaunchedEffect(pageHotMaps, imageWidth, imageHeight, dpiImageWidth, dpiImageHeight) {
+        if (pageHotMaps.isNotEmpty() && imageWidth > 0f && imageHeight > 0f && dpiImageWidth > 0.dp && dpiImageHeight > 0.dp) {
+            convertedHotMaps = convertHotMapsToDisplaySize(
+                hotMaps = pageHotMaps,
+                originalImageWidth = imageWidth,
+                originalImageHeight = imageHeight,
+                displayWidth = dpiImageWidth.value,
+                displayHeight = dpiImageHeight.value
+            )
+            val logData = SaveLogs(SaveLogDetails(
+                adId = adId, loc = location,
+                appDetails = "AOS:[PAGE-HOTMAPS-SCALE_DOWN-GetPageDetails] [AdPageView.kt] convertedHotMaps updated"
+            ))
+            Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+        }
     }
 
 
@@ -553,8 +462,8 @@ private fun DrawHotMaps(
     val wDp = pixelsToDp(width)
     val hDp = pixelsToDp(height)
     val coroutineScope = rememberCoroutineScope()
-    var lastTapTime by remember { mutableLongStateOf(0L) }  // ✅ Track last tap time
-    val tapCooldown = 500L  // ✅ Cooldown in milliseconds
+    var lastTapTime by remember { mutableStateOf(0L) }
+    val tapCooldown = 500L
 
     Box(
         modifier = Modifier
