@@ -42,7 +42,7 @@ fun ZoomableBoxContent(
     enableZoomButtons: Boolean,
     zoomButtonOffset: Int
 ) {
-    var scale by remember { mutableFloatStateOf(1f) }
+    var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var isTapDetected by remember { mutableStateOf(false) }
