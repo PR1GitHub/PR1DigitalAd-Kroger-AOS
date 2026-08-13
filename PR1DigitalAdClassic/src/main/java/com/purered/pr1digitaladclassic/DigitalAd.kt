@@ -90,7 +90,6 @@ fun DigitalAd(
             viewState.loading -> {
                 Logger.i("[API-LOG]  Loading...", saveLogs = null, sendToDB = false)
                 CircularProgressIndicator(
-                    progress = {0.85F},
                     modifier = Modifier.align(Alignment.Center)
                 )
             }

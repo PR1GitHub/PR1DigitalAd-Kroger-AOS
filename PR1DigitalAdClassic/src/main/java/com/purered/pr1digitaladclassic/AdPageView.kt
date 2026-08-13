@@ -431,7 +431,6 @@ internal fun AdPageView(
                     .background(Color.Black.copy(alpha = 0.6f))  // Set the background color
             ) {
                 CircularProgressIndicator(
-                    progress = {0.85F},
                     modifier = Modifier.align(Alignment.Center)  // Center the progress indicator
                 )
             }
