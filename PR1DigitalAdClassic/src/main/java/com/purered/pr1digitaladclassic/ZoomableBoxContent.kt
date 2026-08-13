@@ -54,7 +54,7 @@ fun ZoomableBoxContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color.Transparent)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { isTapDetected = true }

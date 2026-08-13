@@ -2,6 +2,7 @@ package com.purered.pr1digitaladclassic
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,12 +22,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 
 const val DigitalAdLibVersion = "0.0.12" // This is the version of the DigitalAd library
 
@@ -118,82 +121,91 @@ fun DigitalAd(
                     Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = ad.isLogEnabled)
 
 
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Column(modifier = Modifier.fillMaxSize()) {
 
+                        val coroutineScope = rememberCoroutineScope()
                         val pagerState = if (isHorizontalView) {
                             rememberPagerState(pageCount = { ad.pages.size })
                         } else {
                             null
                         }
 
-                        ZoomableBoxContent(
-                            content = {
-                                if (isHorizontalView && pagerState != null) {
-                                    HorizontalPager(
-                                        state = pagerState,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) { pageIndex ->
-                                        val adPage = ad.pages[pageIndex]
-                                        if (adPage.fileURL.isNotEmpty()) {
-                                            AdPageView(
-                                                adPage = adPage,
-                                                modifier = Modifier.fillMaxSize(),
-                                                adId = adId,
-                                                location = location,
-                                                onHotSpotClick = onHotSpotClick,
-                                                key = pageIndex,
-                                                saveLogEnabled = ad.isLogEnabled
-                                            )
-                                        }
-                                    }
-                                } else {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .verticalScroll(rememberScrollState())
-                                    ) {
-                                        ad.pages.forEachIndexed { index, adPage ->
+                        Box(modifier = Modifier.weight(1f)) {
+                            ZoomableBoxContent(
+                                content = {
+                                    if (isHorizontalView && pagerState != null) {
+                                        HorizontalPager(
+                                            state = pagerState,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) { pageIndex ->
+                                            val adPage = ad.pages[pageIndex]
                                             if (adPage.fileURL.isNotEmpty()) {
                                                 AdPageView(
                                                     adPage = adPage,
-                                                    modifier = Modifier.fillMaxWidth(),
+                                                    modifier = Modifier.fillMaxSize(),
                                                     adId = adId,
                                                     location = location,
                                                     onHotSpotClick = onHotSpotClick,
-                                                    key = index,
+                                                    key = pageIndex,
                                                     saveLogEnabled = ad.isLogEnabled
                                                 )
                                             }
                                         }
+                                    } else {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .verticalScroll(rememberScrollState())
+                                        ) {
+                                            ad.pages.forEachIndexed { index, adPage ->
+                                                if (adPage.fileURL.isNotEmpty()) {
+                                                    AdPageView(
+                                                        adPage = adPage,
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        adId = adId,
+                                                        location = location,
+                                                        onHotSpotClick = onHotSpotClick,
+                                                        key = index,
+                                                        saveLogEnabled = ad.isLogEnabled,
+                                                        isScrollable = false
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
-                                }
 
-                                Log.i("isLogEnabled", "ad.isLogEnabled = ${ad.isLogEnabled}")
+                                    Log.i("isLogEnabled", "ad.isLogEnabled = ${ad.isLogEnabled}")
 
-                                val logData = SaveLogs(
-                                    SaveLogDetails(
-                                        adId = adId,
-                                        loc = location,
-                                        appDetails = "AOS:[LOG] [DigitalAd.kt] Generating AdPageView... {adId: $adId, location: $location}"
+                                    val logData = SaveLogs(
+                                        SaveLogDetails(
+                                            adId = adId,
+                                            loc = location,
+                                            appDetails = "AOS:[LOG] [DigitalAd.kt] Generating AdPageView... {adId: $adId, location: $location}"
+                                        )
                                     )
-                                )
-                                Logger.i(
-                                    "${logData.value.appDetails}",
-                                    saveLogs = logData,
-                                    sendToDB = ad.isLogEnabled
-                                )
-                            },
-                            enableZoomButtons = zoomButtonsConfig.enable,
-                            zoomButtonOffset = zoomButtonsConfig.offsetY,
-                        )
+                                    Logger.i(
+                                        "${logData.value.appDetails}",
+                                        saveLogs = logData,
+                                        sendToDB = ad.isLogEnabled
+                                    )
+                                },
+                                enableZoomButtons = zoomButtonsConfig.enable,
+                                zoomButtonOffset = zoomButtonsConfig.offsetY,
+                            )
+                        }
 
                         if (isHorizontalView && pagerState != null) {
                             PagerIndicators(
                                 pageCount = ad.pages.size,
                                 currentPage = pagerState.currentPage,
                                 modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .padding(bottom = 16.dp)
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(vertical = 16.dp),
+                                onPageSelected = { index ->
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                }
                             )
                         }
                     }
@@ -209,7 +221,8 @@ fun DigitalAd(
 internal fun PagerIndicators(
     pageCount: Int,
     currentPage: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPageSelected: (Int) -> Unit
 ) {
     Row(
         modifier = modifier,
@@ -223,6 +236,7 @@ internal fun PagerIndicators(
                     .size(8.dp)
                     .clip(CircleShape)
                     .background(color)
+                    .clickable { onPageSelected(index) }
             )
         }
     }

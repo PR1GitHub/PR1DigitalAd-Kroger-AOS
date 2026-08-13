@@ -5,8 +5,11 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -20,9 +23,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.purered.pr1digitalad.ui.theme.PR1DigitalAdTheme
 import com.purered.pr1digitaladclassic.ApiEnv
 import com.purered.pr1digitaladclassic.DigitalAd
@@ -38,7 +45,14 @@ class MainActivity : ComponentActivity() {
         //enableEdgeToEdge()
         setContent {
             PR1DigitalAdTheme {
-                Scaffold(modifier = Modifier.fillMaxSize(),
+                val isHorizontalView = true // Toggle this for horizontal/vertical view
+                val backgroundColor = if (isHorizontalView) Color(0xFFf5f5f5) else Color.White
+
+                Scaffold(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(backgroundColor),
+                    containerColor = backgroundColor,
                     topBar = {
                         CenterAlignedTopAppBar(
                             title = {
@@ -51,9 +65,27 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 ) { innerPadding ->
-                    WeeklyAdScreen(
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    if (isHorizontalView) {
+                        val configuration = LocalConfiguration.current
+                        val boxHeight = (configuration.screenHeightDp * 0.4f).dp
+                        
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding).padding(10.dp,20.dp,10.dp, 10.dp),
+                            contentAlignment = Alignment.TopCenter
+                        ) {
+                            WeeklyAdScreen(
+                                isHorizontalView = isHorizontalView,
+                                viewHeight = boxHeight
+                            )
+                        }
+                    } else {
+                        WeeklyAdScreen(
+                            isHorizontalView = isHorizontalView,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
                 }
             }
         }
@@ -71,7 +103,10 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun WeeklyAdScreen(
-    modifier: Modifier = Modifier) {
+    isHorizontalView: Boolean,
+    modifier: Modifier = Modifier,
+    viewHeight: Dp? = null
+) {
 
     // PROD
     val adId = "312a07e1-c556-4439-ae4e-3f1ef03002b3"
@@ -79,20 +114,25 @@ fun WeeklyAdScreen(
 
     val stagingKey = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2"
     val prodKey = "bqwwosbzrzcvffztxzyczieljzsahmkp"
-    val isHorizontalView = false
 
-    Log.i("PR1DigitalAd-AOS-SDK","PR1DigitalAd Version = v$DigitalAdLibVersion")
+    Log.i("PR1DigitalAd-AOS-SDK", "PR1DigitalAd Version = v$DigitalAdLibVersion")
 
     // State for showing dialog + holding payload
     var showDialog by remember { mutableStateOf(false) }
     var dialogPayload by remember { mutableStateOf<SpotClickPayload?>(null) }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    val boxModifier = if (isHorizontalView && viewHeight != null) {
+        modifier.fillMaxWidth().height(viewHeight)
+    } else {
+        modifier.fillMaxSize()
+    }
+
+    Box(modifier = boxModifier) {
         DigitalAd(
             adId = adId,
             location = locId,
             apiEnv = ApiEnv.QA,
-            apiKey = prodKey,
+            apiKey = stagingKey,
             isHorizontalView = isHorizontalView,
             zoomButtonsConfig = ZoomButtonsConfig(enable = false, offsetY = -10),
             onHotSpotClick = { payload: SpotClickPayload ->

@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,6 +60,7 @@ internal fun AdPageView(
     onHotSpotClick: (payload: SpotClickPayload) -> Unit,
     key: Int,
     saveLogEnabled: Boolean,
+    isScrollable: Boolean = true,
 ) {
     var imageWidth by remember { mutableStateOf(0f) }
     var imageHeight by remember { mutableStateOf(0f) }
@@ -78,6 +81,8 @@ internal fun AdPageView(
 
     val wDp = pixelsToDp(displaySize.width)
     val hDp = pixelsToDp(displaySize.height)
+
+    val scrollState = rememberScrollState()
 
     LaunchedEffect(fileUrl) {
         val adPageId = adPage?.eventPageId
@@ -341,13 +346,9 @@ internal fun AdPageView(
 
     Box(
         modifier = modifier
-            .fillMaxSize()
             .border(1.dp, Color.White)
             .clipToBounds()
-            .onGloballyPositioned { layoutCoordinates ->
-                displaySize = layoutCoordinates.size.toSize()
-                // println("Display Size: width: ${displaySize.width}, height: ${displaySize.height}")
-            }
+            .then(if (isScrollable) Modifier.verticalScroll(scrollState) else Modifier)
     ) {
 
         if(imageState == "loading"){
@@ -365,7 +366,11 @@ internal fun AdPageView(
 
         AsyncImage(model = fileUrl, contentDescription = null, contentScale = ContentScale.FillWidth, onLoading = {
             imageState = "loading"
-        }, modifier = Modifier.fillMaxSize(), onError = {
+        }, modifier = Modifier
+            .fillMaxWidth()
+            .onGloballyPositioned { layoutCoordinates ->
+                displaySize = layoutCoordinates.size.toSize()
+            }, onError = {
             imageState = "error"
         }, onSuccess = { _ ->
             imageState = "success"
