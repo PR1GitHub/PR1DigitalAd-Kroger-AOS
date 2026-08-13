@@ -364,12 +364,12 @@ internal fun AdPageView(
         }
 
         AsyncImage(model = fileUrl, contentDescription = null, contentScale = ContentScale.FillWidth, onLoading = {
-                imageState = "loading"
-            }, modifier = Modifier.fillMaxSize(), onError = {
-                imageState = "error"
-            }, onSuccess = { _ ->
-                imageState = "success"
-            })
+            imageState = "loading"
+        }, modifier = Modifier.fillMaxSize(), onError = {
+            imageState = "error"
+        }, onSuccess = { _ ->
+            imageState = "success"
+        })
         if (imageState == "success" && convertedHotMaps.isNotEmpty()) {
 
             //  println(" DrawHotMaps DrawHotMaps DrawHotMaps DrawHotMaps")
@@ -477,7 +477,7 @@ private fun DrawHotMaps(
             val top = floor(mapArea.y1).dp
             val right = floor(mapArea.x2).dp
             val bottom = floor(mapArea.y2).dp
-           // Color.LightGray.copy(alpha = 0.4f)
+            // Color.LightGray.copy(alpha = 0.4f)
             Box(
                 modifier = Modifier
                     .offset(x = left, y = top)

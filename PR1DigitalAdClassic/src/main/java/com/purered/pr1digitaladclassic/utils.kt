@@ -184,11 +184,11 @@ internal fun formatEventDates(startDateString: String?, endDateString: String?):
         val endDate = inputFormat.parse(endDateString)
 
         // Format the start and end dates
-     /*   val startMonth = outputMonthFormat.format(startDate)
-        val startDay = outputDayFormat.format(startDate).toInt()
-        val endMonth = outputMonthFormat.format(endDate)
-        val endDay = outputDayFormat.format(endDate).toInt()
-        val year = outputYearFormat.format(endDate)*/
+        /*   val startMonth = outputMonthFormat.format(startDate)
+           val startDay = outputDayFormat.format(startDate).toInt()
+           val endMonth = outputMonthFormat.format(endDate)
+           val endDay = outputDayFormat.format(endDate).toInt()
+           val year = outputYearFormat.format(endDate)*/
 
         val startMonth = startDate?.let { outputMonthFormat.format(it) }
         val startDay = startDate?.let { outputDayFormat.format(it).toInt() } ?: 0
