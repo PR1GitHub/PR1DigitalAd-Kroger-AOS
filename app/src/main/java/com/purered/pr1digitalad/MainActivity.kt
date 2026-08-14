@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PR1DigitalAdTheme {
                 val isHorizontalView = true // Toggle this for horizontal/vertical view
-                val backgroundColor = if (isHorizontalView) Color(0xFFf5f5f5) else Color.White
+                val backgroundColor = if (isHorizontalView) Color(0xFFC0C0C0) else Color.White
 
                 Scaffold(
                     modifier = Modifier
@@ -66,18 +66,15 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     if (isHorizontalView) {
-                        val configuration = LocalConfiguration.current
-                        val boxHeight = (configuration.screenHeightDp * 0.4f).dp
-                        
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(innerPadding).padding(10.dp,20.dp,10.dp, 10.dp),
+                                .padding(innerPadding)
+                                .padding(10.dp),
                             contentAlignment = Alignment.TopCenter
                         ) {
                             WeeklyAdScreen(
-                                isHorizontalView = isHorizontalView,
-                                viewHeight = boxHeight
+                                isHorizontalView = isHorizontalView
                             )
                         }
                     } else {
@@ -121,14 +118,20 @@ fun WeeklyAdScreen(
     var showDialog by remember { mutableStateOf(false) }
     var dialogPayload by remember { mutableStateOf<SpotClickPayload?>(null) }
 
-    val boxModifier = if (isHorizontalView && viewHeight != null) {
-        modifier.fillMaxWidth().height(viewHeight)
+    val boxModifier = if (isHorizontalView) {
+        if (viewHeight != null) {
+            modifier.fillMaxWidth().height(viewHeight)
+        } else {
+            modifier.fillMaxWidth().wrapContentHeight()
+        }
     } else {
         modifier.fillMaxSize()
     }
 
     Box(modifier = boxModifier) {
         DigitalAd(
+            modifier = if (isHorizontalView && viewHeight == null) Modifier.fillMaxWidth().wrapContentHeight()
+                       else Modifier.fillMaxSize(),
             adId = adId,
             location = locId,
             apiEnv = ApiEnv.QA,

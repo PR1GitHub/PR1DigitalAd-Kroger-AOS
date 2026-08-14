@@ -7,9 +7,11 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -31,6 +33,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clipToBounds
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -38,6 +41,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun ZoomableBoxContent(
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
     enableZoomButtons: Boolean,
     zoomButtonOffset: Int
@@ -52,9 +56,9 @@ fun ZoomableBoxContent(
     var isTouching by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
             .background(Color.Transparent)
+            .clipToBounds()
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { isTapDetected = true }
@@ -79,8 +83,8 @@ fun ZoomableBoxContent(
                         offset += adjustedPan
 
                         offset = Offset(
-                            x = offset.x.coerceIn(-maxX * 1.2f, maxX * 1.2f),
-                            y = offset.y.coerceIn(-maxY * 1.2f, maxY * 1.2f)
+                            x = offset.x.coerceIn(-maxX, maxX),
+                            y = offset.y.coerceIn(-maxY, maxY)
                         )
                     }
                     isTapDetected = false
@@ -104,7 +108,8 @@ fun ZoomableBoxContent(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .wrapContentHeight()
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -119,7 +124,7 @@ fun ZoomableBoxContent(
             //  Zoom Controls (+ and - buttons)
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .matchParentSize()
                     .offset(y = zoomButtonOffset.dp)
                     .padding(16.dp),
                 contentAlignment = Alignment.BottomEnd
