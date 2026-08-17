@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +17,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -45,7 +47,7 @@ class MainActivity : ComponentActivity() {
         //enableEdgeToEdge()
         setContent {
             PR1DigitalAdTheme {
-                val isHorizontalView = true // Toggle this for horizontal/vertical view
+                var isHorizontalView by remember { mutableStateOf(true) }
                 val backgroundColor = if (isHorizontalView) Color(0xFFC0C0C0) else Color.White
 
                 Scaffold(
@@ -61,7 +63,23 @@ class MainActivity : ComponentActivity() {
                             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                                 containerColor = Color.LightGray,
                                 titleContentColor = Color.Black
-                            )
+                            ),
+                            actions = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                ) {
+                                    Text(
+                                        text = if (isHorizontalView) "Horizontal" else "Vertical",
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    )
+                                    Switch(
+                                        checked = isHorizontalView,
+                                        onCheckedChange = { isHorizontalView = it }
+                                    )
+                                }
+                            }
                         )
                     }
                 ) { innerPadding ->
