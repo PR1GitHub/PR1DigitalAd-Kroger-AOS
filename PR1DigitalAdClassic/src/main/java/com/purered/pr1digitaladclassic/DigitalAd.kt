@@ -154,7 +154,17 @@ internal fun HorizontalDigitalAdView(
     onHotSpotClick: (SpotClickPayload) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(pageCount = { ad.pages.size })
+    val actualPageCount = ad.pages.size
+
+    // Looping behavior: Use a large virtual page count and modulo for actual content
+    val loopingFactor = 1000
+    val virtualPageCount = if (actualPageCount > 1) actualPageCount * loopingFactor else actualPageCount
+    val initialPage = if (actualPageCount > 1) (virtualPageCount / 2) else 0
+
+    val pagerState = rememberPagerState(
+        initialPage = initialPage,
+        pageCount = { virtualPageCount }
+    )
 
     Column(modifier = modifier) {
         Box(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
@@ -164,8 +174,9 @@ internal fun HorizontalDigitalAdView(
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxWidth().wrapContentHeight()
-                    ) { pageIndex ->
-                        val adPage = ad.pages[pageIndex]
+                    ) { virtualPageIndex ->
+                        val actualPageIndex = virtualPageIndex % actualPageCount
+                        val adPage = ad.pages[actualPageIndex]
                         if (adPage.fileURL.isNotEmpty()) {
                             AdPageView(
                                 adPage = adPage,
@@ -173,7 +184,7 @@ internal fun HorizontalDigitalAdView(
                                 adId = adId,
                                 location = location,
                                 onHotSpotClick = onHotSpotClick,
-                                key = pageIndex,
+                                key = virtualPageIndex,
                                 saveLogEnabled = ad.isLogEnabled
                             )
                         }
@@ -200,14 +211,17 @@ internal fun HorizontalDigitalAdView(
         }
 
         PagerIndicators(
-            pageCount = ad.pages.size,
-            currentPage = pagerState.currentPage,
+            pageCount = actualPageCount,
+            currentPage = pagerState.currentPage % actualPageCount,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(vertical = 16.dp),
             onPageSelected = { index ->
                 coroutineScope.launch {
-                    pagerState.animateScrollToPage(index)
+                    val currentVirtualPage = pagerState.currentPage
+                    val currentActualPage = currentVirtualPage % actualPageCount
+                    val targetVirtualPage = currentVirtualPage + (index - currentActualPage)
+                    pagerState.animateScrollToPage(targetVirtualPage)
                 }
             }
         )
