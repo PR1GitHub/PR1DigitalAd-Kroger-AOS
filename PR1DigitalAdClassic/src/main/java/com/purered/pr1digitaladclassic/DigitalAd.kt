@@ -23,11 +23,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
@@ -166,56 +171,82 @@ internal fun HorizontalDigitalAdView(
         pageCount = { virtualPageCount }
     )
 
-    Column(modifier = modifier) {
-        Box(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
-            ZoomableBoxContent(
-                modifier = Modifier.fillMaxWidth().wrapContentHeight(),
-                content = {
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.fillMaxWidth().wrapContentHeight()
-                    ) { virtualPageIndex ->
-                        val actualPageIndex = virtualPageIndex % actualPageCount
-                        val adPage = ad.pages[actualPageIndex]
-                        if (adPage.fileURL.isNotEmpty()) {
-                            AdPageView(
-                                adPage = adPage,
-                                modifier = Modifier.fillMaxWidth().wrapContentHeight(),
-                                adId = adId,
-                                location = location,
-                                onHotSpotClick = onHotSpotClick,
-                                key = virtualPageIndex,
-                                saveLogEnabled = ad.isLogEnabled
-                            )
-                        }
-                    }
-
-                    Log.i("isLogEnabled", "ad.isLogEnabled = ${ad.isLogEnabled}")
-
-                    val logData = SaveLogs(
-                        SaveLogDetails(
-                            adId = adId,
-                            loc = location,
-                            appDetails = "AOS:[LOG] [DigitalAd.kt] Generating AdPageView... {adId: $adId, location: $location}"
-                        )
-                    )
-                    Logger.i(
-                        "${logData.value.appDetails}",
-                        saveLogs = logData,
-                        sendToDB = ad.isLogEnabled
-                    )
-                },
-                enableZoomButtons = zoomButtonsConfig.enable,
-                zoomButtonOffset = zoomButtonsConfig.offsetY,
-            )
+    // Directional swiping: Block backward looping from the first page
+    val directionalScrollConnection = remember(pagerState, actualPageCount) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val isAtFirstPage = (pagerState.currentPage % actualPageCount) == 0
+                return if (source == NestedScrollSource.UserInput && available.x > 0 && isAtFirstPage) {
+                    // Only block user drags when at the first page to prevent backward looping.
+                    // Allowing other sources (like SideEffect or Fling) ensures the pager can still snap/settle correctly.
+                    available
+                } else {
+                    Offset.Zero
+                }
+            }
         }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+    ) {
+        ZoomableBoxContent(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            content = {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .nestedScroll(directionalScrollConnection)
+                ) { virtualPageIndex ->
+                    val actualPageIndex = virtualPageIndex % actualPageCount
+                    val adPage = ad.pages[actualPageIndex]
+                    if (adPage.fileURL.isNotEmpty()) {
+                        AdPageView(
+                            adPage = adPage,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight(),
+                            adId = adId,
+                            location = location,
+                            onHotSpotClick = onHotSpotClick,
+                            key = virtualPageIndex,
+                            saveLogEnabled = ad.isLogEnabled,
+                            isScrollable = false
+                        )
+                    }
+                }
+
+                Log.i("isLogEnabled", "ad.isLogEnabled = ${ad.isLogEnabled}")
+
+                val logData = SaveLogs(
+                    SaveLogDetails(
+                        adId = adId,
+                        loc = location,
+                        appDetails = "AOS:[LOG] [DigitalAd.kt] Generating AdPageView... {adId: $adId, location: $location}"
+                    )
+                )
+                Logger.i(
+                    "${logData.value.appDetails}",
+                    saveLogs = logData,
+                    sendToDB = ad.isLogEnabled
+                )
+            },
+            enableZoomButtons = zoomButtonsConfig.enable,
+            zoomButtonOffset = zoomButtonsConfig.offsetY,
+        )
 
         PagerIndicators(
             pageCount = actualPageCount,
             currentPage = pagerState.currentPage % actualPageCount,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(vertical = 16.dp),
+                .padding(top = 8.dp, bottom = 16.dp),
             onPageSelected = { index ->
                 coroutineScope.launch {
                     val currentVirtualPage = pagerState.currentPage

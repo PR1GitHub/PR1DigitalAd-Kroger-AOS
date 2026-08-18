@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -148,7 +149,7 @@ fun WeeklyAdScreen(
 
     Box(modifier = boxModifier) {
         DigitalAd(
-            modifier = if (isHorizontalView && viewHeight == null) Modifier.fillMaxWidth().wrapContentHeight()
+            modifier = if (isHorizontalView && viewHeight == null) Modifier.fillMaxWidth().wrapContentHeight().animateContentSize()
                        else Modifier.fillMaxSize(),
             adId = adId,
             location = locId,
