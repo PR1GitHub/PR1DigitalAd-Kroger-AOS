@@ -104,7 +104,8 @@ fun DigitalAd(
                 Logger.i("[API-LOG]  Loading...", saveLogs = null, sendToDB = false)
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .heightIn(min = 440.dp)
                         .padding(16.dp)
                         .shimmerEffect()
                 )
