@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
+/*
 
 @Composable
 fun ZoomableBoxContent(
@@ -188,6 +189,166 @@ fun ZoomableBoxContent(
                             color = Color.White,
                             fontSize = 30.sp, // Adjust size as needed
                             modifier = Modifier.offset(y = (-13).dp) // Adjust vertical position
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+*/
+
+@Composable
+fun ZoomableBoxContent(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+    enableZoomButtons: Boolean,
+    zoomButtonOffset: Int
+) {
+    var scale by remember { mutableStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    var boxSize by remember { mutableStateOf(IntSize.Zero) }
+    var isTapDetected by remember { mutableStateOf(false) }
+
+    val hotMapViewModel: HotMapViewModel = viewModel()
+    val coroutineScope = rememberCoroutineScope()
+    var isTouching by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clipToBounds()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        isTapDetected = true
+                    }
+                )
+            }
+            .pointerInput(Unit) {
+                detectTransformGestures { _, pan, zoom, _ ->
+
+                    if (!isTouching) {
+                        isTouching = true
+                        hotMapViewModel.onZoomStart()
+                        Log.d("ZoomTracker", "Zoom started")
+                    }
+
+                    if (!isTapDetected) {
+
+                        scale = (scale * zoom).coerceIn(1f, 5f)
+
+                        val extraWidth =
+                            (scale - 1) * boxSize.width
+
+                        val extraHeight =
+                            (scale - 1) * boxSize.height
+
+                        val maxX = extraWidth / 2
+                        val maxY = extraHeight / 2
+
+                        val adjustedPan = pan * 0.8f
+
+                        offset += adjustedPan
+
+                        offset = Offset(
+                            x = offset.x.coerceIn(-maxX, maxX),
+                            y = offset.y.coerceIn(-maxY, maxY)
+                        )
+                    }
+
+                    isTapDetected = false
+                }
+            }
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+
+                        if (
+                            event.changes.none { it.pressed } &&
+                            isTouching
+                        ) {
+                            isTouching = false
+
+                            coroutineScope.launch {
+                                delay(300.milliseconds)
+                                hotMapViewModel.onZoomEnd()
+                            }
+                        }
+                    }
+                }
+            }
+            .onGloballyPositioned {
+                boxSize = it.size
+            }
+    ) {
+
+        // Content
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = offset.x
+                    translationY = offset.y
+                }
+        ) {
+            content()
+        }
+
+        if (enableZoomButtons) {
+
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .offset(y = zoomButtonOffset.dp)
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    FloatingActionButton(
+                        onClick = {
+                            scale = (scale + 1f)
+                                .coerceAtMost(5f)
+                        },
+                        modifier = Modifier.size(48.dp),
+                        containerColor = Color.Black.copy(alpha = 0.5f),
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                    ) {
+                        Text(
+                            text = "+",
+                            color = Color.White,
+                            fontSize = 30.sp
+                        )
+                    }
+
+                    FloatingActionButton(
+                        onClick = {
+                            scale = (scale - 1f)
+                                .coerceAtLeast(1f)
+
+                            if (scale == 1f) {
+                                offset = Offset.Zero
+                            }
+                        },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .offset(y = (-2).dp),
+                        containerColor = Color.Black.copy(alpha = 0.5f),
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                    ) {
+                        Text(
+                            text = "_",
+                            color = Color.White,
+                            fontSize = 30.sp,
+                            modifier = Modifier.offset(y = (-13).dp)
                         )
                     }
                 }

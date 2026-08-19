@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxSize()
                                 .padding(innerPadding)
                                 .padding(10.dp),
-                            contentAlignment = Alignment.TopCenter
+                            contentAlignment = Alignment.TopCenter,
                         ) {
                             WeeklyAdScreen(
                                 isHorizontalView = isHorizontalView,

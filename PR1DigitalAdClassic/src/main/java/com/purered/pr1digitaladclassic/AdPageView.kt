@@ -61,6 +61,7 @@ internal fun AdPageView(
     key: Int,
     saveLogEnabled: Boolean,
     isScrollable: Boolean = true,
+    onSizeCalculated: ((Size) -> Unit)? = null,
 ) {
     var imageWidth by remember { mutableStateOf(0f) }
     var imageHeight by remember { mutableStateOf(0f) }
@@ -369,7 +370,11 @@ internal fun AdPageView(
         }, modifier = Modifier
             .fillMaxWidth()
             .onGloballyPositioned { layoutCoordinates ->
-                displaySize = layoutCoordinates.size.toSize()
+                val size = layoutCoordinates.size.toSize()
+                displaySize = size
+                if (size.width > 0 && size.height > 0) {
+                    onSizeCalculated?.invoke(size)
+                }
             }, onError = {
             imageState = "error"
         }, onSuccess = { _ ->
