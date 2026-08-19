@@ -93,7 +93,8 @@ class MainActivity : ComponentActivity() {
                             contentAlignment = Alignment.TopCenter
                         ) {
                             WeeklyAdScreen(
-                                isHorizontalView = isHorizontalView
+                                isHorizontalView = isHorizontalView,
+                                viewHeight = null
                             )
                         }
                     } else {

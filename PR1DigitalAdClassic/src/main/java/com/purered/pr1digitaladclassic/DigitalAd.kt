@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -23,8 +24,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -171,14 +174,23 @@ internal fun HorizontalDigitalAdView(
         pageCount = { virtualPageCount }
     )
 
-    // Directional swiping: Block backward looping from the first page
-    val directionalScrollConnection = remember(pagerState, actualPageCount) {
+    // State to track if the user has reached the last page for the first time
+    var hasReachedLastPage by remember { mutableStateOf(false) }
+
+    LaunchedEffect(pagerState.currentPage) {
+        val actualIndex = pagerState.currentPage % actualPageCount
+        if (actualIndex == actualPageCount - 1) {
+            hasReachedLastPage = true
+        }
+    }
+
+    // Directional swiping: Block backward looping from the first page until the end is reached once
+    val directionalScrollConnection = remember(hasReachedLastPage, pagerState, actualPageCount) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val isAtFirstPage = (pagerState.currentPage % actualPageCount) == 0
-                return if (source == NestedScrollSource.UserInput && available.x > 0 && isAtFirstPage) {
-                    // Only block user drags when at the first page to prevent backward looping.
-                    // Allowing other sources (like SideEffect or Fling) ensures the pager can still snap/settle correctly.
+                return if (!hasReachedLastPage && available.x > 0 && source == NestedScrollSource.UserInput && isAtFirstPage) {
+                    // Block user drags that would loop backward from first page
                     available
                 } else {
                     Offset.Zero
@@ -211,6 +223,7 @@ internal fun HorizontalDigitalAdView(
                             adPage = adPage,
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 300.dp)
                                 .wrapContentHeight(),
                             adId = adId,
                             location = location,
