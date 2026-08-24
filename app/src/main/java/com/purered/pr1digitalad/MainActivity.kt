@@ -191,8 +191,8 @@ fun WeeklyAdScreen(
                 Toast.makeText(context, "Pages: $pageCount", Toast.LENGTH_SHORT).show()
             },
             didChangeAdPage = {
-                    currentPagePosition: Int, pageCount: Int, eventPageId: String ->
-                currentPageId = eventPageId
+                    currentPagePosition: Int, pageCount: Int, adPageId: String ->
+                currentPageId = adPageId
                 totalPageCount = pageCount
                 pagePosition = currentPagePosition
                 //Toast.makeText(context, "Page: $eventPageId, $currentPage/$pageCount", Toast.LENGTH_SHORT).show()
