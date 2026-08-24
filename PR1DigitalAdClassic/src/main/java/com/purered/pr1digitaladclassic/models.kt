@@ -139,3 +139,7 @@ internal  data class BoxData(
     val right: Float,
     val bottom: Float
 )
+
+enum class AdVersion {
+    classic,compact
+}

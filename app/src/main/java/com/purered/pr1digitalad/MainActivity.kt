@@ -3,11 +3,13 @@ package com.purered.pr1digitalad
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,10 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.purered.pr1digitalad.ui.theme.PR1DigitalAdTheme
+import com.purered.pr1digitaladclassic.AdVersion
 import com.purered.pr1digitaladclassic.ApiEnv
 import com.purered.pr1digitaladclassic.DigitalAd
 import com.purered.pr1digitaladclassic.DigitalAdLibVersion
@@ -49,8 +53,8 @@ class MainActivity : ComponentActivity() {
         //enableEdgeToEdge()
         setContent {
             PR1DigitalAdTheme {
-                var isHorizontalView by remember { mutableStateOf(true) }
-                val backgroundColor = if (isHorizontalView) Color(0xFFC0C0C0) else Color.White
+                var adVersion by remember { mutableStateOf(AdVersion.compact) }
+                val backgroundColor = if (adVersion == AdVersion.compact) Color(0xFFC0C0C0) else Color.White
 
                 Scaffold(
                     modifier = Modifier
@@ -72,20 +76,22 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(end = 8.dp)
                                 ) {
                                     Text(
-                                        text = if (isHorizontalView) "Horizontal" else "Vertical",
+                                        text = if (adVersion == AdVersion.compact) "Horizontal" else "Vertical",
                                         color = Color.Black,
                                         modifier = Modifier.padding(end = 8.dp)
                                     )
                                     Switch(
-                                        checked = isHorizontalView,
-                                        onCheckedChange = { isHorizontalView = it }
+                                        checked = adVersion == AdVersion.compact,
+                                        onCheckedChange = { isChecked ->
+                                            adVersion = if (isChecked) AdVersion.compact else AdVersion.classic
+                                        }
                                     )
                                 }
                             }
                         )
                     }
                 ) { innerPadding ->
-                    if (isHorizontalView) {
+                    if (adVersion == AdVersion.compact) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -94,13 +100,13 @@ class MainActivity : ComponentActivity() {
                             contentAlignment = Alignment.TopCenter,
                         ) {
                             WeeklyAdScreen(
-                                isHorizontalView = isHorizontalView,
+                                adVersion = adVersion,
                                 viewHeight = null
                             )
                         }
                     } else {
                         WeeklyAdScreen(
-                            isHorizontalView = isHorizontalView,
+                            adVersion = adVersion,
                             modifier = Modifier.padding(innerPadding)
                         )
                     }
@@ -121,10 +127,12 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun WeeklyAdScreen(
-    isHorizontalView: Boolean,
+    adVersion: AdVersion,
     modifier: Modifier = Modifier,
     viewHeight: Dp? = null
 ) {
+
+    val context = LocalContext.current
 
     // PROD
     val adId = "312a07e1-c556-4439-ae4e-3f1ef03002b3"
@@ -138,8 +146,12 @@ fun WeeklyAdScreen(
     // State for showing dialog + holding payload
     var showDialog by remember { mutableStateOf(false) }
     var dialogPayload by remember { mutableStateOf<SpotClickPayload?>(null) }
+    var currentPageId by remember { mutableStateOf("") }
+    var totalPageCount by remember { mutableStateOf(0) }
+    var pagePosition by remember { mutableStateOf(0) }
 
-    val boxModifier = if (isHorizontalView) {
+
+    val boxModifier = if (adVersion == AdVersion.compact) {
         if (viewHeight != null) {
             modifier.fillMaxWidth().height(viewHeight)
         } else {
@@ -151,13 +163,13 @@ fun WeeklyAdScreen(
 
     Box(modifier = boxModifier) {
         DigitalAd(
-            modifier = if (isHorizontalView && viewHeight == null) Modifier.fillMaxWidth().wrapContentHeight().animateContentSize()
+            modifier = if (adVersion == AdVersion.compact && viewHeight == null) Modifier.fillMaxWidth().wrapContentHeight().animateContentSize()
                        else Modifier.fillMaxSize(),
             adId = adId,
             location = locId,
             apiEnv = ApiEnv.QA,
             apiKey = stagingKey,
-            isHorizontalView = isHorizontalView,
+            adVersion = adVersion,
             zoomButtonsConfig = ZoomButtonsConfig(enable = false, offsetY = -10),
             onHotSpotClick = { payload: SpotClickPayload ->
                 if (payload.itemType == "promo") {
@@ -173,9 +185,36 @@ fun WeeklyAdScreen(
                 // Show dialog
                 dialogPayload = payload
                 showDialog = true // make true to visually see the payload in a alert box (for dev only)
+            },
+            onCompleteAdLoad = { pageCount: Int ->
+                totalPageCount = pageCount
+                Toast.makeText(context, "Pages: $pageCount", Toast.LENGTH_SHORT).show()
+            },
+            didChangeAdPage = {
+                    currentPagePosition: Int, pageCount: Int, eventPageId: String ->
+                currentPageId = eventPageId
+                totalPageCount = pageCount
+                pagePosition = currentPagePosition
+                //Toast.makeText(context, "Page: $eventPageId, $currentPage/$pageCount", Toast.LENGTH_SHORT).show()
             }
+
         )
     }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(10.dp),
+        contentAlignment = Alignment.BottomStart
+    ) {
+        Column(
+            modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+        ) {
+            Text(text = "Page Id: $currentPageId")
+            Text(text = "Page: $pagePosition/$totalPageCount")
+        }
+    }
+
 
     // Compose AlertDialog
     if (showDialog && dialogPayload != null) {

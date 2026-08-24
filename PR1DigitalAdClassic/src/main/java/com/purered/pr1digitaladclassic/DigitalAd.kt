@@ -78,11 +78,13 @@ fun DigitalAd(
     location: String,
     apiKey: String,
     apiEnv: ApiEnv,
-    isHorizontalView: Boolean,
+    adVersion: AdVersion = AdVersion.compact,
     //zoomControls: Boolean = true,
     //zoomControlsOffset: Int = -140,
     zoomButtonsConfig: ZoomButtonsConfig = ZoomButtonsConfig(),
-    onHotSpotClick: ( payload:SpotClickPayload) -> Unit
+    onHotSpotClick: (payload:SpotClickPayload) -> Unit,
+    onCompleteAdLoad: (totalPages: Int) -> Unit = {},
+    didChangeAdPage: (currentPage: Int, totalPages: Int, eventPageId: String) -> Unit = { _, _, _ -> }
 ) {
 
     //val isHorizontalView = true
@@ -128,20 +130,25 @@ fun DigitalAd(
                 if(viewState.weeklyAd != null) {
                     val ad = viewState.weeklyAd!!
 
+                    LaunchedEffect(ad) {
+                        onCompleteAdLoad(ad.pages.count())
+                    }
+
                     val logData = SaveLogs(SaveLogDetails(
                         adId = adId, loc = location,
                         appDetails = "AOS:[LOG] [DigitalAd.kt]  WeeklyAd data fetched. {adId: $adId, location: $location}"
                     ))
                     Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = ad.isLogEnabled)
 
-                    if (isHorizontalView) {
+                    if (adVersion == AdVersion.compact) {
                         HorizontalDigitalAdView(
                             modifier = Modifier.fillMaxWidth().wrapContentHeight(),
                             ad = ad,
                             adId = adId,
                             location = location,
                             zoomButtonsConfig = zoomButtonsConfig,
-                            onHotSpotClick = onHotSpotClick
+                            onHotSpotClick = onHotSpotClick,
+                            didChangeAdPage = didChangeAdPage
                         )
                     } else {
                         VerticalDigitalAdView(
@@ -166,7 +173,8 @@ internal fun HorizontalDigitalAdView(
     adId: String,
     location: String,
     zoomButtonsConfig: ZoomButtonsConfig,
-    onHotSpotClick: (SpotClickPayload) -> Unit
+    onHotSpotClick: (SpotClickPayload) -> Unit,
+    didChangeAdPage: (currentPage: Int, totalPages: Int, eventPageId: String) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val actualPageCount = ad.pages.size
@@ -191,6 +199,7 @@ internal fun HorizontalDigitalAdView(
         if (actualIndex == actualPageCount - 1) {
             hasReachedLastPage = true
         }
+        didChangeAdPage(actualIndex + 1, actualPageCount, ad.pages[actualIndex].eventPageId)
     }
 
     // Directional swiping: Block backward looping from the first page until the end is reached once
