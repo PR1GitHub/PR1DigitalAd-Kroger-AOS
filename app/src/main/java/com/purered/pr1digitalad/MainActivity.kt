@@ -37,7 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.purered.pr1digitalad.ui.theme.PR1DigitalAdTheme
-import com.purered.pr1digitaladclassic.AdVersion
+import com.purered.pr1digitaladclassic.AdExperience
 import com.purered.pr1digitaladclassic.ApiEnv
 import com.purered.pr1digitaladclassic.DigitalAd
 import com.purered.pr1digitaladclassic.DigitalAdLibVersion
@@ -53,8 +53,8 @@ class MainActivity : ComponentActivity() {
         //enableEdgeToEdge()
         setContent {
             PR1DigitalAdTheme {
-                var adVersion by remember { mutableStateOf(AdVersion.compact) }
-                val backgroundColor = if (adVersion == AdVersion.compact) Color(0xFFC0C0C0) else Color.White
+                var adExperience by remember { mutableStateOf(AdExperience.oneAd) }
+                val backgroundColor = if (adExperience == AdExperience.oneAd) Color(0xFFC0C0C0) else Color.White
 
                 Scaffold(
                     modifier = Modifier
@@ -76,14 +76,14 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(end = 8.dp)
                                 ) {
                                     Text(
-                                        text = if (adVersion == AdVersion.compact) "Horizontal" else "Vertical",
+                                        text = if (adExperience == AdExperience.oneAd) "Horizontal" else "Vertical",
                                         color = Color.Black,
                                         modifier = Modifier.padding(end = 8.dp)
                                     )
                                     Switch(
-                                        checked = adVersion == AdVersion.compact,
+                                        checked = adExperience == AdExperience.oneAd,
                                         onCheckedChange = { isChecked ->
-                                            adVersion = if (isChecked) AdVersion.compact else AdVersion.classic
+                                            adExperience = if (isChecked) AdExperience.oneAd else AdExperience.classic
                                         }
                                     )
                                 }
@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 ) { innerPadding ->
-                    if (adVersion == AdVersion.compact) {
+                    if (adExperience == AdExperience.oneAd) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -100,13 +100,13 @@ class MainActivity : ComponentActivity() {
                             contentAlignment = Alignment.TopCenter,
                         ) {
                             WeeklyAdScreen(
-                                adVersion = adVersion,
+                                adExperience = adExperience,
                                 viewHeight = null
                             )
                         }
                     } else {
                         WeeklyAdScreen(
-                            adVersion = adVersion,
+                            adExperience = adExperience,
                             modifier = Modifier.padding(innerPadding)
                         )
                     }
@@ -127,7 +127,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun WeeklyAdScreen(
-    adVersion: AdVersion,
+    adExperience: AdExperience,
     modifier: Modifier = Modifier,
     viewHeight: Dp? = null
 ) {
@@ -135,8 +135,8 @@ fun WeeklyAdScreen(
     val context = LocalContext.current
 
     // PROD
-    val adId = "312a07e1-c556-4439-ae4e-3f1ef03002b3"
-    val locId = "01100002"
+    val adId = "8fff1a9e-219d-4bee-b6ff-9e9a4c5a231a"
+    val locId = "70100005"
 
     val stagingKey = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2"
     val prodKey = "bqwwosbzrzcvffztxzyczieljzsahmkp"
@@ -151,7 +151,7 @@ fun WeeklyAdScreen(
     var pagePosition by remember { mutableStateOf(0) }
 
 
-    val boxModifier = if (adVersion == AdVersion.compact) {
+    val boxModifier = if (adExperience == AdExperience.oneAd) {
         if (viewHeight != null) {
             modifier.fillMaxWidth().height(viewHeight)
         } else {
@@ -163,13 +163,13 @@ fun WeeklyAdScreen(
 
     Box(modifier = boxModifier) {
         DigitalAd(
-            modifier = if (adVersion == AdVersion.compact && viewHeight == null) Modifier.fillMaxWidth().wrapContentHeight().animateContentSize()
+            modifier = if (adExperience == AdExperience.oneAd && viewHeight == null) Modifier.fillMaxWidth().wrapContentHeight().animateContentSize()
                        else Modifier.fillMaxSize(),
             adId = adId,
             location = locId,
             apiEnv = ApiEnv.QA,
             apiKey = stagingKey,
-            adVersion = adVersion,
+            adExperience = adExperience,
             zoomButtonsConfig = ZoomButtonsConfig(enable = false, offsetY = -10),
             onHotSpotClick = { payload: SpotClickPayload ->
                 if (payload.itemType == "promo") {
@@ -201,20 +201,21 @@ fun WeeklyAdScreen(
         )
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp),
-        contentAlignment = Alignment.BottomStart
-    ) {
-        Column(
-            modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+    if (adExperience == AdExperience.oneAd){
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp),
+            contentAlignment = Alignment.BottomStart
         ) {
-            Text(text = "Page Id: $currentPageId")
-            Text(text = "Page: $pagePosition/$totalPageCount")
+            Column(
+                modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+            ) {
+                Text(text = "Page Id: $currentPageId")
+                Text(text = "Page: $pagePosition/$totalPageCount")
+            }
         }
     }
-
 
     // Compose AlertDialog
     if (showDialog && dialogPayload != null) {

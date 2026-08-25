@@ -10,7 +10,9 @@ internal data class WeeklyAd(
     val eventName: String,
     val pages: List<AdPage>,
     val logLevelCode: Int,
-    val isLogEnabled: Boolean
+    val isLogEnabled: Boolean,
+    val adPagesCount: Int,
+    val isHorizontalAd: Boolean
 )
 
 /*-- AD PAGE DETAILS from getPageDetails API --*/
@@ -29,7 +31,9 @@ internal data class AdPage(
     val startDate: Any?,
     val endDate: Any?,
     val pageSetting: Any?,
-    val contents: List<PageContent>
+    val contents: List<PageContent>,
+    val adPageId: String,
+    val adPageSNo: String? = null
 )
 
 internal data class PageContent(
@@ -140,6 +144,6 @@ internal  data class BoxData(
     val bottom: Float
 )
 
-enum class AdVersion {
-    classic,compact
+enum class AdExperience {
+    classic,oneAd
 }

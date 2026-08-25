@@ -32,7 +32,7 @@ class ApiKeyInterceptor(private val apiKey: String) : Interceptor {
 }
 //bqwwosbzrzcvffztxzyczieljzsahmkp
 //https://oms-kroger-webapp-da-classic-api-prod.przone.net
-
+//https://oms-kroger-webapp-da-classic-api-qa.przone.net/api
 internal fun getBaseUrl(environment: ApiEnv): String {
     return when (environment) {
         ApiEnv.PROD -> "https://oms-kroger-webapp-da-classic-api-prod.przone.net/api/"

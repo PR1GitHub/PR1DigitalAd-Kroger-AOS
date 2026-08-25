@@ -78,7 +78,7 @@ fun DigitalAd(
     location: String,
     apiKey: String,
     apiEnv: ApiEnv,
-    adVersion: AdVersion = AdVersion.compact,
+    adExperience: AdExperience = AdExperience.oneAd,
     //zoomControls: Boolean = true,
     //zoomControlsOffset: Int = -140,
     zoomButtonsConfig: ZoomButtonsConfig = ZoomButtonsConfig(),
@@ -140,7 +140,7 @@ fun DigitalAd(
                     ))
                     Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = ad.isLogEnabled)
 
-                    if (adVersion == AdVersion.compact) {
+                    if (adExperience == AdExperience.oneAd) {
                         HorizontalDigitalAdView(
                             modifier = Modifier.fillMaxWidth().wrapContentHeight(),
                             ad = ad,
@@ -199,7 +199,7 @@ internal fun HorizontalDigitalAdView(
         if (actualIndex == actualPageCount - 1) {
             hasReachedLastPage = true
         }
-        didChangeAdPage(actualIndex + 1, actualPageCount, ad.pages[actualIndex].page)
+        didChangeAdPage(actualIndex + 1, actualPageCount, ad.pages[actualIndex].adPageId)
     }
 
     // Directional swiping: Block backward looping from the first page until the end is reached once
