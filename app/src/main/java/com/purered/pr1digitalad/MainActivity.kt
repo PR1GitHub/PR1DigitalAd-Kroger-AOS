@@ -146,9 +146,9 @@ fun WeeklyAdScreen(
     // State for showing dialog + holding payload
     var showDialog by remember { mutableStateOf(false) }
     var dialogPayload by remember { mutableStateOf<SpotClickPayload?>(null) }
-    var currentPageId by remember { mutableStateOf("") }
-    var totalPageCount by remember { mutableStateOf(0) }
-    var pagePosition by remember { mutableStateOf(0) }
+    var _adPageId by remember { mutableStateOf("") }
+    var _totalPages by remember { mutableStateOf(0) }
+    var _currentPageIndex by remember { mutableStateOf(0) }
 
 
     val boxModifier = if (adExperience == AdExperience.oneAd) {
@@ -186,16 +186,15 @@ fun WeeklyAdScreen(
                 dialogPayload = payload
                 showDialog = true // make true to visually see the payload in a alert box (for dev only)
             },
-            onCompleteAdLoad = { pageCount: Int ->
-                totalPageCount = pageCount
-                Toast.makeText(context, "Pages: $pageCount", Toast.LENGTH_SHORT).show()
+            onAdLoaded = { totalPages: Int ->
+                _totalPages = totalPages
+                Toast.makeText(context, "Pages: $totalPages", Toast.LENGTH_SHORT).show()
             },
-            didChangeAdPage = {
-                    currentPagePosition: Int, pageCount: Int, adPageId: String ->
-                currentPageId = adPageId
-                totalPageCount = pageCount
-                pagePosition = currentPagePosition
-                //Toast.makeText(context, "Page: $eventPageId, $currentPage/$pageCount", Toast.LENGTH_SHORT).show()
+            onAdPageChanged = {
+                    totalPages: Int, currentPageIndex: Int, adPageId: String ->
+                _totalPages = totalPages
+                _currentPageIndex = currentPageIndex + 1
+                _adPageId = adPageId
             }
 
         )
@@ -211,8 +210,8 @@ fun WeeklyAdScreen(
             Column(
                 modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
             ) {
-                Text(text = "Page Id: $currentPageId")
-                Text(text = "Page: $pagePosition/$totalPageCount")
+                Text(text = "Page Id: $_adPageId")
+                Text(text = "Page: $_currentPageIndex/$_totalPages")
             }
         }
     }
