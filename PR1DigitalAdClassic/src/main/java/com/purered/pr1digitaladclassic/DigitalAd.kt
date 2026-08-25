@@ -1,12 +1,14 @@
 package com.purered.pr1digitaladclassic
 
 import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,12 +35,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
@@ -354,27 +362,83 @@ internal fun VerticalDigitalAdView(
     }
 }
 
+/*-- PAGE INDICATORS --*/
+// Only this many dots are ever on screen. Pages are grouped into blocks of this size: the
+// active dot walks across the block, and reaching the end swaps the band to the next block.
+// Dots on a side that still has pages beyond the block shrink towards the edge.
+private const val MaxVisibleIndicatorDots = 10
+private val IndicatorDotSize = 8.dp
+private val IndicatorDotSpacing = 8.dp
+
 @Composable
 internal fun PagerIndicators(
     pageCount: Int,
     currentPage: Int,
     modifier: Modifier = Modifier,
+    maxVisibleDots: Int = MaxVisibleIndicatorDots,
+    dotSize: Dp = IndicatorDotSize,
+    dotSpacing: Dp = IndicatorDotSpacing,
     onPageSelected: (Int) -> Unit
 ) {
-    FlowRow(
+    if (pageCount <= 1) return
+
+    val visibleCount = minOf(pageCount, maxVisibleDots.coerceAtLeast(1))
+    // The band is the block of pages the current page falls in. The trailing block is
+    // pulled back so it stays full width instead of rendering a stub of a few dots.
+    val windowStart = (currentPage / visibleCount * visibleCount)
+        .coerceIn(0, pageCount - visibleCount)
+    val windowEnd = windowStart + visibleCount - 1
+    val hasMoreBefore = windowStart > 0
+    val hasMoreAfter = windowEnd < pageCount - 1
+
+    Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        repeat(pageCount) { index ->
+        for (index in windowStart..windowEnd) {
+            // How close this dot is to an edge that still has pages beyond it.
+            val edgeDistance = minOf(
+                if (hasMoreBefore) index - windowStart else Int.MAX_VALUE,
+                if (hasMoreAfter) windowEnd - index else Int.MAX_VALUE
+            )
+            val targetScale = when {
+                // The active dot is always full size, even when it sits on a shrunk slot.
+                index == currentPage -> 1f
+                edgeDistance == 0 -> 0.5f
+                edgeDistance == 1 -> 0.75f
+                else -> 1f
+            }
+            val scale by animateFloatAsState(
+                targetValue = targetScale,
+                label = "page indicator scale"
+            )
             val color = if (currentPage == index) Color.DarkGray else Color.LightGray
+            val interactionSource = remember { MutableInteractionSource() }
+
             Box(
                 modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(color)
-                    .clickable { onPageSelected(index) }
-            )
+                    // Keeps the tap target (and the pitch between dots) constant while
+                    // the dot itself scales.
+                    .size(dotSize + dotSpacing)
+                    .semantics {
+                        role = Role.Button
+                        contentDescription = "Go to page ${index + 1} of $pageCount"
+                    }
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null
+                    ) { onPageSelected(index) },
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(dotSize)
+                        .scale(scale)
+                        .clip(CircleShape)
+                        .background(color)
+                )
+            }
         }
     }
 }
