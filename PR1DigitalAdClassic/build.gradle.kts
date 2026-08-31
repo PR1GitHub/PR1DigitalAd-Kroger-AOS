@@ -16,7 +16,7 @@ plugins {
 // publication and BuildConfig.LIB_VERSION read from here so they cannot drift apart.
 val libVersion: String = (project.findProperty("version") as? String)
     ?.takeIf { it.isNotBlank() && it != "unspecified" }
-    ?: "0.0.17"
+    ?: "0.0.18"
 
 android {
     namespace = "com.purered.pr1digitaladclassic"
