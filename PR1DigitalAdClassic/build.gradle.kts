@@ -11,12 +11,20 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Single source of truth for the published version. JitPack invokes the build with
+// -Pversion=<git tag>; the fallback is only used for local builds. Both the Maven
+// publication and BuildConfig.LIB_VERSION read from here so they cannot drift apart.
+val libVersion: String = (project.findProperty("version") as? String)
+    ?.takeIf { it.isNotBlank() && it != "unspecified" }
+    ?: "0.0.17"
+
 android {
     namespace = "com.purered.pr1digitaladclassic"
     compileSdk = 37
 
     defaultConfig {
         minSdk = 24
+        buildConfigField("String", "LIB_VERSION", "\"$libVersion\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -37,6 +45,16 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+
+    // Registers the AGP "release" software component. Without this, the
+    // components.findByName("release") below resolves to null and the Maven publication
+    // ships a bare POM with no .aar attached.
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
     }
 }
 
@@ -64,7 +82,7 @@ publishing{
                 from(components.findByName("release"))
                 groupId = "com.purered.pr1digitaladclassic"
                 artifactId = "pr1digitaladclassic"
-                version = "0.0.17"
+                version = libVersion
 
                 //com.purered.pr1digitaladclassic:pr1digitaladclassic:0.0.4
             }
@@ -74,22 +92,19 @@ publishing{
 
 dependencies {
 
-    implementation (libs.androidx.core.ktx)
     implementation (platform(libs.androidx.compose.bom))
     implementation (libs.androidx.compose.ui)
     implementation (libs.androidx.compose.ui.tooling.preview)
     debugImplementation (libs.androidx.compose.ui.tooling)
-    implementation (libs.androidx.activity.compose)
-    implementation (libs.androidx.appcompat)
-    implementation (libs.material)
-    testImplementation (libs.junit)
-    androidTestImplementation (libs.androidx.junit)
-    androidTestImplementation (libs.androidx.espresso.core)
     implementation (libs.coil.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
-    implementation (libs.hilt.android)
-    implementation(libs.kotlinx.serialization.json)
+    // Used directly by ApiKeyInterceptor, so declared rather than relied on transitively.
+    implementation(libs.okhttp)
+
+    testImplementation (libs.junit)
+    androidTestImplementation (libs.androidx.junit)
+    androidTestImplementation (libs.androidx.espresso.core)
 }

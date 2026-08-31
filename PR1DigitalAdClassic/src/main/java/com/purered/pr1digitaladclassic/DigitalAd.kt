@@ -51,7 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 
-const val DigitalAdLibVersion = "0.0.17" // This is the version of the DigitalAd library
+// Set from the Gradle publication version, so it always matches the released artifact.
+val DigitalAdLibVersion: String = BuildConfig.LIB_VERSION
 
 data class SpotClickPayload(
     val itemType: String,
