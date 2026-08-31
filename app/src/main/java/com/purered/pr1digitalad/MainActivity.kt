@@ -54,7 +54,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             PR1DigitalAdTheme {
                 var adExperience by remember { mutableStateOf(AdExperience.oneAd) }
-                val backgroundColor = if (adExperience == AdExperience.oneAd) Color(0xFFC0C0C0) else Color.White
+                //val backgroundColor = if (adExperience == AdExperience.oneAd) Color(0xFFC0C0C0) else Color.White
+                val backgroundColor = Color.White
 
                 Scaffold(
                     modifier = Modifier

@@ -51,7 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 
-const val DigitalAdLibVersion = "0.0.12" // This is the version of the DigitalAd library
+const val DigitalAdLibVersion = "0.0.17" // This is the version of the DigitalAd library
 
 data class SpotClickPayload(
     val itemType: String,
