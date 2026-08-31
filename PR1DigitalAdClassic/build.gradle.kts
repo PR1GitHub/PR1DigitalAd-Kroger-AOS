@@ -20,7 +20,7 @@ val libVersion: String = (project.findProperty("version") as? String)
 
 android {
     namespace = "com.purered.pr1digitaladclassic"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
