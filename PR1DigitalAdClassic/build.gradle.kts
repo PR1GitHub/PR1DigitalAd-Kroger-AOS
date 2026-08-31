@@ -2,8 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 //plugins {
 //    alias(libs.plugins.android.library)
-//    alias(libs.plugins.jetbrains.kotlin.android)
-//}
+////}
 
 plugins {
     alias(libs.plugins.android.library)
@@ -16,7 +15,7 @@ plugins {
 // publication and BuildConfig.LIB_VERSION read from here so they cannot drift apart.
 val libVersion: String = (project.findProperty("version") as? String)
     ?.takeIf { it.isNotBlank() && it != "unspecified" }
-    ?: "0.0.18"
+    ?: "0.0.20"
 
 android {
     namespace = "com.purered.pr1digitaladclassic"
@@ -61,6 +60,14 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
+        // Client-facing contract: consumers compile against our classes, so their
+        // Kotlin compiler must be able to read our metadata. AGP 9's built-in Kotlin
+        // is 2.4.0 and external KGP <= 2.2 cannot run on AGP 9, so we keep the 2.4
+        // compiler but emit 2.2.0 metadata, readable by clients on Kotlin 2.1+.
+        // 2.1.0 metadata + the 2.1.x stdlib below = clients on Kotlin 2.0+ can consume
+        // this SDK. Verified by test-host/, which compiles against the published
+        // artifact with an oldest-supported-generation client Kotlin.
+        freeCompilerArgs.add("-Xmetadata-version=2.1.0")
     }
 }
 
@@ -91,6 +98,11 @@ publishing{
 }
 
 dependencies {
+
+    // Deliberately old: this version reaches every client's compile classpath via the
+    // POM (kotlin.stdlib.default.dependency=false suppresses the auto-added 2.4.0).
+    // Raising it raises the minimum Kotlin every client app must build with.
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.21")
 
     implementation (platform(libs.androidx.compose.bom))
     implementation (libs.androidx.compose.ui)
