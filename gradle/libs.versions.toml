@@ -1,6 +1,6 @@
 [versions]
 agp = "9.3.1"
-coilCompose = "2.7.0"
+coilCompose = "2.2.2"
 converterGson = "3.0.0"
 hiltAndroid = "2.60.1"
 kotlin = "2.4.0"
