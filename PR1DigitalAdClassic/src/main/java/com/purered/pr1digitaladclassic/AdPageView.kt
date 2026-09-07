@@ -58,6 +58,7 @@ internal fun AdPageView(
     adId: String,
     location: String,
     adService: ApiService,
+    pageDetailsCache: AdPageDetailsCache,
     onHotSpotClick: (payload: SpotClickPayload) -> Unit,
     key: Int,
     saveLogEnabled: Boolean,
@@ -93,13 +94,16 @@ internal fun AdPageView(
         if (adPageId != null) {
             Logger.i("[LOG]  Entered adPageId($adPageId) != null condition", saveLogs = null, sendToDB = false)
             try {
-                val adPageData: AdPage = adService.getPageDetails(adId = adId, pageId = adPageId, location = location)
-
-                val logData = SaveLogs(SaveLogDetails(
-                    adId = adId, loc = location,
-                    appDetails = "AOS:[API-LOG-GetPageDetails]  {adPageId: $adPageId} getPageDetails Api triggered... { apiRequest : https://oms-kroger-webapp-da-classic-api-prod.przone.net/api/dacs/$adId/pages/$adPageId?location=$location }"
-                ))
-                Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+                // The "Api triggered" log lives inside the fetch lambda so it reflects
+                // real network calls only - cache hits do not log or hit the network.
+                val adPageData: AdPage = pageDetailsCache.getOrFetch(adPageId) {
+                    val logData = SaveLogs(SaveLogDetails(
+                        adId = adId, loc = location,
+                        appDetails = "AOS:[API-LOG-GetPageDetails]  {adPageId: $adPageId} getPageDetails Api triggered... { apiRequest : https://oms-kroger-webapp-da-classic-api-prod.przone.net/api/dacs/$adId/pages/$adPageId?location=$location }"
+                    ))
+                    Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+                    adService.getPageDetails(adId = adId, pageId = adPageId, location = location)
+                }
 
                 if (adPageData.contents.isNotEmpty()) {
                     val logData1 = SaveLogs(SaveLogDetails(

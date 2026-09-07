@@ -259,6 +259,11 @@ internal fun HorizontalDigitalAdView(
     val defaultAspectRatio = 0.826f
     val pageAspectRatios = remember { mutableStateMapOf<Int, Float>() }
 
+    // Keyed on the loaded ad: a fresh WeeklyAd (retry/reload/new instance) drops the
+    // cache, so page data is exactly as fresh as the ad it came with. Within one
+    // loaded ad it stops the looping pager refetching page details on every revisit.
+    val pageDetailsCache = remember(ad) { AdPageDetailsCache() }
+
     // Looping behavior: Use a large virtual page count and modulo for actual content
     val loopingFactor = 1000
     val virtualPageCount = if (actualPageCount > 1) actualPageCount * loopingFactor else actualPageCount
@@ -323,6 +328,7 @@ internal fun HorizontalDigitalAdView(
                             adId = adId,
                             location = location,
                             adService = adService,
+                            pageDetailsCache = pageDetailsCache,
                             onHotSpotClick = onHotSpotClick,
                             key = virtualPageIndex,
                             saveLogEnabled = ad.isLogEnabled,
@@ -392,6 +398,8 @@ internal fun VerticalDigitalAdView(
     onHotSpotClick: (SpotClickPayload) -> Unit,
     onAdError: (payload: AdErrorPayload) -> Unit
 ) {
+    val pageDetailsCache = remember(ad) { AdPageDetailsCache() }
+
     Column(modifier = modifier) {
         Box(modifier = Modifier.weight(1f)) {
             ZoomableBoxContent(
@@ -410,6 +418,7 @@ internal fun VerticalDigitalAdView(
                                     adId = adId,
                                     location = location,
                                     adService = adService,
+                                    pageDetailsCache = pageDetailsCache,
                                     onHotSpotClick = onHotSpotClick,
                                     key = index,
                                     saveLogEnabled = ad.isLogEnabled,
