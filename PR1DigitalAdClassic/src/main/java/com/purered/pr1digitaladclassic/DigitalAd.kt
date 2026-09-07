@@ -76,6 +76,30 @@ data class SpotClickPayload(
     val isShoppable: Boolean? = false,
 )
 
+/*-- ERROR REPORTING --*/
+enum class AdErrorType {
+    /** getAdDetails failed - nothing renders. The SDK shows its retry UI. */
+    adLoadFailed,
+    /** Ad loaded but contains no pages - nothing renders. */
+    adEmpty,
+    /** getPageDetails or the page's image dimensions failed - the page image may still
+     *  show, but its hotspots will not work. */
+    pageDetailsFailed,
+    /** A page image failed to render. */
+    pageImageFailed,
+    /** A hotspot was tapped but the offer could not be loaded - no payload dispatched. */
+    offerLoadFailed,
+}
+
+data class AdErrorPayload(
+    val type: AdErrorType,
+    val message: String,
+    /** Set for page-scoped errors (pageDetailsFailed, pageImageFailed, offerLoadFailed). */
+    val adPageId: String? = null,
+    /** True when the SDK offers its own recovery (e.g. the ad-load retry button). */
+    val isRecoverable: Boolean = false,
+)
+
 data class ZoomButtonsConfig (
     val enable: Boolean = true,
     val offsetY: Int = -140,
@@ -94,7 +118,8 @@ fun DigitalAd(
     zoomButtonsConfig: ZoomButtonsConfig = ZoomButtonsConfig(),
     onHotSpotClick: (payload:SpotClickPayload) -> Unit,
     onAdLoaded: (totalPages: Int) -> Unit = {},
-    onAdPageChanged: (totalPages: Int, currentPageIndex: Int, adPageId: String) -> Unit = { _, _, _ -> }
+    onAdPageChanged: (totalPages: Int, currentPageIndex: Int, adPageId: String) -> Unit = { _, _, _ -> },
+    onAdError: (payload: AdErrorPayload) -> Unit = {}
 ) {
 
     //val isHorizontalView = true
@@ -123,6 +148,15 @@ fun DigitalAd(
                 )
             }
             viewState.error != null -> {
+                LaunchedEffect(viewState.error) {
+                    onAdError(
+                        AdErrorPayload(
+                            type = AdErrorType.adLoadFailed,
+                            message = viewState.error ?: "Failed to load ad",
+                            isRecoverable = true
+                        )
+                    )
+                }
                 Column(modifier = Modifier.align(Alignment.Center)) {
                     Text(text = "Something went wrong. Please try again.")
                     TextButton(onClick = { weeklyAdViewModel.reloadWeeklyAd() }) {
@@ -142,6 +176,14 @@ fun DigitalAd(
 
                     LaunchedEffect(ad) {
                         onAdLoaded(ad.pages.count())
+                        if (ad.pages.isEmpty()) {
+                            onAdError(
+                                AdErrorPayload(
+                                    type = AdErrorType.adEmpty,
+                                    message = "Ad loaded but contains no pages"
+                                )
+                            )
+                        }
                     }
 
                     val logData = SaveLogs(SaveLogDetails(
@@ -158,7 +200,8 @@ fun DigitalAd(
                             location = location,
                             zoomButtonsConfig = zoomButtonsConfig,
                             onHotSpotClick = onHotSpotClick,
-                            onAdPageChanged = onAdPageChanged
+                            onAdPageChanged = onAdPageChanged,
+                            onAdError = onAdError
                         )
                     } else {
                         VerticalDigitalAdView(
@@ -167,7 +210,8 @@ fun DigitalAd(
                             adId = adId,
                             location = location,
                             zoomButtonsConfig = zoomButtonsConfig,
-                            onHotSpotClick = onHotSpotClick
+                            onHotSpotClick = onHotSpotClick,
+                            onAdError = onAdError
                         )
                     }
                 }
@@ -184,7 +228,8 @@ internal fun HorizontalDigitalAdView(
     location: String,
     zoomButtonsConfig: ZoomButtonsConfig,
     onHotSpotClick: (SpotClickPayload) -> Unit,
-    onAdPageChanged: (totalPages: Int, currentPageIndex: Int, adPageId: String) -> Unit
+    onAdPageChanged: (totalPages: Int, currentPageIndex: Int, adPageId: String) -> Unit,
+    onAdError: (payload: AdErrorPayload) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val actualPageCount = ad.pages.size
@@ -272,6 +317,7 @@ internal fun HorizontalDigitalAdView(
                             key = virtualPageIndex,
                             saveLogEnabled = ad.isLogEnabled,
                             isScrollable = false,
+                            onAdError = onAdError,
                             onSizeCalculated = { size ->
                                 if (size.width > 0 && size.height > 0) {
                                     val newRatio = size.width / size.height
@@ -332,7 +378,8 @@ internal fun VerticalDigitalAdView(
     adId: String,
     location: String,
     zoomButtonsConfig: ZoomButtonsConfig,
-    onHotSpotClick: (SpotClickPayload) -> Unit
+    onHotSpotClick: (SpotClickPayload) -> Unit,
+    onAdError: (payload: AdErrorPayload) -> Unit
 ) {
     Column(modifier = modifier) {
         Box(modifier = Modifier.weight(1f)) {
@@ -354,7 +401,8 @@ internal fun VerticalDigitalAdView(
                                     onHotSpotClick = onHotSpotClick,
                                     key = index,
                                     saveLogEnabled = ad.isLogEnabled,
-                                    isScrollable = false
+                                    isScrollable = false,
+                                    onAdError = onAdError
                                 )
                             }
                         }

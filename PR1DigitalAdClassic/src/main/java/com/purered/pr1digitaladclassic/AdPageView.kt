@@ -62,6 +62,7 @@ internal fun AdPageView(
     saveLogEnabled: Boolean,
     isScrollable: Boolean = true,
     onSizeCalculated: ((Size) -> Unit)? = null,
+    onAdError: (payload: AdErrorPayload) -> Unit = {},
 ) {
     var imageWidth by remember { mutableStateOf(0f) }
     var imageHeight by remember { mutableStateOf(0f) }
@@ -73,6 +74,7 @@ internal fun AdPageView(
     var pageHotMaps by remember { mutableStateOf(emptyList<MapArea>()) }
     var convertedHotMaps by remember { mutableStateOf(emptyList<MapArea>()) }
     var isOfferLoading by remember { mutableStateOf(false) }
+    var imageErrorReported by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val fileUrl = adPage?.compressedFileURL
@@ -109,20 +111,41 @@ internal fun AdPageView(
                         .data(fileUrl)
                         .size(coil.size.Size.ORIGINAL)
                         .build()
-                    val result = (context.imageLoader.execute(request) as SuccessResult).drawable
-                    imageWidth = result.intrinsicWidth.toFloat()
-                    imageHeight = result.intrinsicHeight.toFloat()
+                    // The image's intrinsic dimensions are what the hotspot coordinates
+                    // are scaled against - without them the hotspots cannot render. The
+                    // previous unchecked SuccessResult cast threw on failure and was
+                    // swallowed by the outer catch, so hotspots vanished silently.
+                    when (val result = context.imageLoader.execute(request)) {
+                        is SuccessResult -> {
+                            imageWidth = result.drawable.intrinsicWidth.toFloat()
+                            imageHeight = result.drawable.intrinsicHeight.toFloat()
 
-                    var localPageHotMaps: List<MapArea> = emptyList()
-                    adPageData.contents.forEachIndexed { index, pageContent ->
-                        try {
-                            val mapArea = convertJsonToMapArea(pageContent.mapConfig)
-                            localPageHotMaps = localPageHotMaps + mapArea
-                        } catch (_: Exception) {
-                            Logger.i("AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Conversion for mapArea at index = $index FAILED", saveLogs = null, sendToDB = false)
+                            var localPageHotMaps: List<MapArea> = emptyList()
+                            adPageData.contents.forEachIndexed { index, pageContent ->
+                                try {
+                                    val mapArea = convertJsonToMapArea(pageContent.mapConfig)
+                                    localPageHotMaps = localPageHotMaps + mapArea
+                                } catch (_: Exception) {
+                                    Logger.i("AOS:[PAGE-HOTMAPS-GSON-GetPageDetails]  Conversion for mapArea at index = $index FAILED", saveLogs = null, sendToDB = false)
+                                }
+                            }
+                            pageHotMaps = localPageHotMaps
+                        }
+                        else -> {
+                            val logData2 = SaveLogs(SaveLogDetails(
+                                adId = adId, loc = location,
+                                appDetails = "AOS:[API-LOG-GetPageDetails]  {adPageId: $adPageId} Page image size fetch FAILED - hotspots disabled for this page."
+                            ))
+                            Logger.e("${logData2.value.appDetails}", saveLogs = logData2, sendToDB = saveLogEnabled)
+                            onAdError(
+                                AdErrorPayload(
+                                    type = AdErrorType.pageDetailsFailed,
+                                    message = "Could not determine page image size; hotspots disabled for this page",
+                                    adPageId = adPage.adPageId
+                                )
+                            )
                         }
                     }
-                    pageHotMaps = localPageHotMaps
                 } else {
                     val logData = SaveLogs(SaveLogDetails(
                         adId = adId, loc = location,
@@ -130,12 +153,19 @@ internal fun AdPageView(
                     ))
                     Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 val logData = SaveLogs(SaveLogDetails(
                     adId = adId, loc = location,
                     appDetails = "AOS:[API-LOG-GetPageDetails]  getPageDetails Api FAILED. {adId = $adId, eventPageId = $adPageId, location = $location}"
                 ))
                 Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+                onAdError(
+                    AdErrorPayload(
+                        type = AdErrorType.pageDetailsFailed,
+                        message = "Failed to load page details: ${e.message}",
+                        adPageId = adPage.adPageId
+                    )
+                )
             }
         }
     }
@@ -318,6 +348,14 @@ internal fun AdPageView(
                         val logData = SaveLogs(SaveLogDetails(adId = adId, loc = location, appDetails = "AOS:[HOTMAP-LOG] {Offer} Payload dispatched : $payload"))
                         Logger.i("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
 
+                    } else {
+                        onAdError(
+                            AdErrorPayload(
+                                type = AdErrorType.offerLoadFailed,
+                                message = "Offer details came back empty for this hotspot",
+                                adPageId = adPage?.adPageId
+                            )
+                        )
                     }
                 }
                 else {
@@ -326,6 +364,13 @@ internal fun AdPageView(
                         appDetails = "AOS:[LOG]  offerVersionProductGroupId == null for selectedMapArea : $selectedMapArea ;; [ getOfferDetails Api will not be triggered]."
                     ))
                     Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+                    onAdError(
+                        AdErrorPayload(
+                            type = AdErrorType.offerLoadFailed,
+                            message = "Hotspot has no offer attached; nothing to open",
+                            adPageId = adPage?.adPageId
+                        )
+                    )
                 }
             }
 
@@ -338,6 +383,13 @@ internal fun AdPageView(
                 appDetails = "AOS:[LOG]  {onHotMapClickHandler > catch block} Error : ${e.message} ; selectedMapArea = $selectedMapArea"
             ))
             Logger.e("${logData.value.appDetails}", saveLogs = logData, sendToDB = saveLogEnabled)
+            onAdError(
+                AdErrorPayload(
+                    type = AdErrorType.offerLoadFailed,
+                    message = "Failed to load offer details: ${e.message}",
+                    adPageId = adPage?.adPageId
+                )
+            )
         }
         finally {
             isOfferLoading = false
@@ -377,6 +429,16 @@ internal fun AdPageView(
                 }
             }, onError = {
             imageState = "error"
+            if (!imageErrorReported) {
+                imageErrorReported = true
+                onAdError(
+                    AdErrorPayload(
+                        type = AdErrorType.pageImageFailed,
+                        message = "Page image failed to load",
+                        adPageId = adPage?.adPageId
+                    )
+                )
+            }
         }, onSuccess = { _ ->
             imageState = "success"
         })
