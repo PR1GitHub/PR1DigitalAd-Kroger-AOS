@@ -57,6 +57,7 @@ internal fun AdPageView(
     adPage: AdPage? = null,
     adId: String,
     location: String,
+    adService: ApiService,
     onHotSpotClick: (payload: SpotClickPayload) -> Unit,
     key: Int,
     saveLogEnabled: Boolean,
@@ -92,7 +93,7 @@ internal fun AdPageView(
         if (adPageId != null) {
             Logger.i("[LOG]  Entered adPageId($adPageId) != null condition", saveLogs = null, sendToDB = false)
             try {
-                val adPageData: AdPage = weeklyAdService.getPageDetails(adId = adId, pageId = adPageId, location = location)
+                val adPageData: AdPage = adService.getPageDetails(adId = adId, pageId = adPageId, location = location)
 
                 val logData = SaveLogs(SaveLogDetails(
                     adId = adId, loc = location,
@@ -295,7 +296,7 @@ internal fun AdPageView(
                 if (selectedMapArea.content?.offerVersionProductGroupId != null) {
                     Logger.i("[HOTMAP-LOG]  Entered offerVersionProductGroupId != null condition", saveLogs = null, sendToDB = false)
 
-                    val offerDetailsList = weeklyAdService.getOfferDetails(
+                    val offerDetailsList = adService.getOfferDetails(
                         adId,
                         selectedMapArea.content!!.offerVersionProductGroupId,
                         location = location

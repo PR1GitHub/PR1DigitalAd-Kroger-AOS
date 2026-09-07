@@ -21,14 +21,16 @@ internal class DigitalAdViewModel: ViewModel()  {
 
     private var adId:String?=null
     private var location:String?=null
+    private var adService: ApiService? = null
 
     internal var logEnabled: Boolean=false
 
 
     fun reloadWeeklyAd(){
         _weeklyAdState.value = _weeklyAdState.value.copy(loading = true)
-        if(adId != null && location != null) {
-            fetchAdDetails(this.adId!!, this.location!!)
+        val service = adService
+        if(adId != null && location != null && service != null) {
+            fetchAdDetails(this.adId!!, this.location!!, service)
 
             val logData = SaveLogs(SaveLogDetails(
                 adId = this.adId!!, loc = this.location!!,
@@ -38,9 +40,10 @@ internal class DigitalAdViewModel: ViewModel()  {
         }
     }
 
-    fun fetchAdDetails(adId: String, location: String) {
+    fun fetchAdDetails(adId: String, location: String, service: ApiService) {
         this.adId = adId
         this.location = location
+        this.adService = service
 
         Logger.i("[API-LOG]  [DigitalAdViewModel.kt]  Entered fetchAdDetails()...", saveLogs = null, sendToDB = false)
 
@@ -50,7 +53,7 @@ internal class DigitalAdViewModel: ViewModel()  {
         viewModelScope.launch{
 
             try {
-                val response = weeklyAdService.getAdDetails(adId,location)
+                val response = service.getAdDetails(adId,location)
 
                 _weeklyAdState.value = _weeklyAdState.value.copy(
                     loading = false,

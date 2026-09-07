@@ -122,18 +122,24 @@ fun DigitalAd(
     onAdError: (payload: AdErrorPayload) -> Unit = {}
 ) {
 
-    //val isHorizontalView = true
-    weeklyAdService = createWeeklyAdService(apiEnv,apiKey)
+    // One service per (env, key), created once per configuration instead of a global
+    // reassigned on every recomposition - two DigitalAd instances with different
+    // configs no longer clobber each other. The .also hands Logger its telemetry
+    // handle before any sendToDB logging happens in this composition.
+    val adService = remember(apiEnv, apiKey) {
+        createWeeklyAdService(apiEnv, apiKey).also { telemetryAdService = it }
+    }
 
-    //val mode = "public"
-    val weeklyAdViewModel: DigitalAdViewModel = viewModel()
+    // Keyed so two DigitalAd instances on one screen do not share load state; two
+    // instances showing the SAME ad intentionally share one ViewModel and one fetch.
+    val weeklyAdViewModel: DigitalAdViewModel = viewModel(key = "PR1DigitalAd:$adId:$location")
     val viewState by weeklyAdViewModel.digitalAdState
 
     // Enable or disable local logging
     Logger.isLoggingEnabled = true // Set to `false` to disable local logs globally
 
-    LaunchedEffect(Unit) {
-        weeklyAdViewModel.fetchAdDetails(adId,location)
+    LaunchedEffect(adService) {
+        weeklyAdViewModel.fetchAdDetails(adId, location, adService)
     }
     Box(modifier = modifier) {
         when {
@@ -198,6 +204,7 @@ fun DigitalAd(
                             ad = ad,
                             adId = adId,
                             location = location,
+                            adService = adService,
                             zoomButtonsConfig = zoomButtonsConfig,
                             onHotSpotClick = onHotSpotClick,
                             onAdPageChanged = onAdPageChanged,
@@ -209,6 +216,7 @@ fun DigitalAd(
                             ad = ad,
                             adId = adId,
                             location = location,
+                            adService = adService,
                             zoomButtonsConfig = zoomButtonsConfig,
                             onHotSpotClick = onHotSpotClick,
                             onAdError = onAdError
@@ -226,6 +234,7 @@ internal fun HorizontalDigitalAdView(
     ad: WeeklyAd,
     adId: String,
     location: String,
+    adService: ApiService,
     zoomButtonsConfig: ZoomButtonsConfig,
     onHotSpotClick: (SpotClickPayload) -> Unit,
     onAdPageChanged: (totalPages: Int, currentPageIndex: Int, adPageId: String) -> Unit,
@@ -313,6 +322,7 @@ internal fun HorizontalDigitalAdView(
                                 .aspectRatio(pageAspectRatios[actualPageIndex] ?: defaultAspectRatio),
                             adId = adId,
                             location = location,
+                            adService = adService,
                             onHotSpotClick = onHotSpotClick,
                             key = virtualPageIndex,
                             saveLogEnabled = ad.isLogEnabled,
@@ -377,6 +387,7 @@ internal fun VerticalDigitalAdView(
     ad: WeeklyAd,
     adId: String,
     location: String,
+    adService: ApiService,
     zoomButtonsConfig: ZoomButtonsConfig,
     onHotSpotClick: (SpotClickPayload) -> Unit,
     onAdError: (payload: AdErrorPayload) -> Unit
@@ -398,6 +409,7 @@ internal fun VerticalDigitalAdView(
                                     modifier = Modifier.fillMaxWidth(),
                                     adId = adId,
                                     location = location,
+                                    adService = adService,
                                     onHotSpotClick = onHotSpotClick,
                                     key = index,
                                     saveLogEnabled = ad.isLogEnabled,

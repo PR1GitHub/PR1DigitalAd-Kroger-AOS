@@ -30,7 +30,6 @@ class ApiKeyInterceptor(private val apiKey: String) : Interceptor {
         return chain.proceed(request)
     }
 }
-//bqwwosbzrzcvffztxzyczieljzsahmkp
 //https://oms-kroger-webapp-da-classic-api-prod.przone.net
 //https://oms-kroger-webapp-da-classic-api-qa.przone.net/api
 internal fun getBaseUrl(environment: ApiEnv): String {
@@ -67,7 +66,12 @@ internal fun createWeeklyAdService(environment: ApiEnv, apiKey: String): ApiServ
 }
 
 
-internal  var weeklyAdService = createWeeklyAdService(ApiEnv.QA,"pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp2")
+// Telemetry-only handle for Logger's fire-and-forget savelogs POSTs. All data calls
+// (ad / page / offer) use the per-instance service created in DigitalAd and passed
+// down explicitly - the previous global service meant two DigitalAd instances with
+// different env/key clobbered each other, and it shipped a hardcoded default key.
+// Null until the first DigitalAd configures it; DB logging is skipped until then.
+internal var telemetryAdService: ApiService? = null
 
 
 //private  val  retrofit = Retrofit.Builder().baseUrl("https://oms-kroger-webapp-da-classic-api-qa.azurewebsites.net/api/")

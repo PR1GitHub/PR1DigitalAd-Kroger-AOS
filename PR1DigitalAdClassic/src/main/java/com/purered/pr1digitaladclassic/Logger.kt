@@ -50,7 +50,12 @@ object Logger {
 
         coroutineScope.launch {
             try {
-                weeklyAdService.saveLogDetails(saveLogs)
+                val service = telemetryAdService
+                if (service == null) {
+                    Log.i(tagStr, "[API-LOG] [Logger.kt]  No API service configured yet; savelogs skipped")
+                    return@launch
+                }
+                service.saveLogDetails(saveLogs)
                 Log.i(tagStr, "[API-LOG] [Logger.kt]  Log saved successfully: ${saveLogs.value}")
             } catch (e: Exception) {
                 Log.i(tagStr, "[API-LOG] [Logger.kt]  Log saving failed: ${e.message}")
