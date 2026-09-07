@@ -10,11 +10,12 @@ Statuses: `open` / `in progress` / `fixed <version>` / `wontfix`.
 | B-1 | Pager auto-advances several pages on cold start with no input; phantom `onAdPageChanged` events | high | fixed 0.0.23 | Evidence + repro: [pager-auto-advance-investigation.md](pager-auto-advance-investigation.md) |
 | B-2 | One shared `aspectRatio` for all horizontal pages; last-measured ratio applied everywhere, churned on every image load | high | fixed 0.0.23 | Suspected root cause of B-1 (`DigitalAd.kt`, `HorizontalDigitalAdView`) |
 | B-3 | `% actualPageCount` crashes on an ad with zero pages | high | fixed 0.0.23 | `DigitalAd.kt` horizontal view |
-| B-4 | `onAdPageChanged` never fires in vertical (`classic`) mode | medium | open | Not even a parameter of `VerticalDigitalAdView`; needs a "current page from scroll position" definition |
+| B-4 | `onAdPageChanged` never fires in vertical (`classic`) mode | lowest (deferred) | open | Not even a parameter of `VerticalDigitalAdView`; needs a "current page from scroll position" definition |
 | B-5 | `weeklyAdService` global `var` reassigned inside composition; two `DigitalAd` instances clobber each other (also unkeyed `viewModel()` shares state) | medium | open | `DigitalAd.kt:91`, `DigitalAdApi.kt:70` |
 | B-6 | `getPageDetails` refetched per *virtual* page (x1000 looping pager); no cache | medium | open | Key by actual page index + cache in ViewModel |
-| B-7 | Unchecked `as SuccessResult` cast; image failure silently kills hotmaps for the page | medium | open | `AdPageView.kt` |
+| B-7 | Unchecked `as SuccessResult` cast; image failure silently kills hotmaps for the page | medium | fixed 0.0.23 | `AdPageView.kt` |
 | B-8 | Gesture conflicts: backward-swipe block at page 1 too broad; zoomed pan fights pager drag | low | open | |
+| B-9 | No error surface for host apps: ad/page/offer failures invisible or SDK-internal only | high | fixed 0.0.23 | `onAdError` callback + `AdErrorType`/`AdErrorPayload`; folds in B-7 |
 
 ## Hygiene / operational
 
