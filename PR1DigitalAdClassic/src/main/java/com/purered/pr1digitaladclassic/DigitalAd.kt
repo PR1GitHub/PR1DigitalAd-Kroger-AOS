@@ -27,7 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 // Set from the Gradle publication version, so it always matches the released artifact.
 val DigitalAdLibVersion: String = BuildConfig.LIB_VERSION
@@ -188,7 +189,21 @@ internal fun HorizontalDigitalAdView(
     val coroutineScope = rememberCoroutineScope()
     val actualPageCount = ad.pages.size
 
-    var aspectRatio by remember { mutableFloatStateOf(0.826f) }
+    // An ad with no pages would crash every `% actualPageCount` below.
+    if (actualPageCount == 0) {
+        Logger.e(
+            "[LOG] [DigitalAd.kt] Ad has no pages, nothing to render. {adId: $adId}",
+            saveLogs = null, sendToDB = false
+        )
+        return
+    }
+
+    // B-2: aspect ratio is tracked PER PAGE, keyed by actual page index. A single
+    // shared ratio meant every page took the last-measured page's shape, and each
+    // image load resized all pages at once - relayout rippling through the pager
+    // while it settled is what made it creep forward on its own (B-1).
+    val defaultAspectRatio = 0.826f
+    val pageAspectRatios = remember { mutableStateMapOf<Int, Float>() }
 
     // Looping behavior: Use a large virtual page count and modulo for actual content
     val loopingFactor = 1000
@@ -250,7 +265,7 @@ internal fun HorizontalDigitalAdView(
                             adPage = adPage,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .aspectRatio(aspectRatio),
+                                .aspectRatio(pageAspectRatios[actualPageIndex] ?: defaultAspectRatio),
                             adId = adId,
                             location = location,
                             onHotSpotClick = onHotSpotClick,
@@ -260,8 +275,12 @@ internal fun HorizontalDigitalAdView(
                             onSizeCalculated = { size ->
                                 if (size.width > 0 && size.height > 0) {
                                     val newRatio = size.width / size.height
-                                    if (aspectRatio != newRatio) {
-                                        aspectRatio = newRatio
+                                    val current = pageAspectRatios[actualPageIndex]
+                                    // Epsilon compare: onGloballyPositioned re-reports on
+                                    // every relayout with float jitter, and an exact !=
+                                    // kept the state churning forever.
+                                    if (current == null || abs(current - newRatio) > 0.01f) {
+                                        pageAspectRatios[actualPageIndex] = newRatio
                                     }
                                 }
                             }
