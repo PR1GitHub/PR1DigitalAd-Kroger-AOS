@@ -1,5 +1,6 @@
 package com.purered.pr1digitalad.screens
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
@@ -51,6 +53,18 @@ import java.util.Locale
 fun OneAdScreen(
     modifier: Modifier = Modifier
 ) {
+    // Landscape: the client-style two-column layout (ad at 60%, offers rail at 40%),
+    // shared with the Weekly Ad screen. Portrait keeps this screen's own layout
+    // including the on-screen error log.
+    if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        LandscapeAdHarness(
+            modifier = modifier,
+            title = "One Ad",
+            logTag = "OneAdScreen"
+        )
+        return
+    }
+
     var totalPages by remember { mutableStateOf(0) }
     var currentPageIndex by remember { mutableStateOf(0) }
     // Newest-first log of onAdError callbacks, shown on screen for testing.

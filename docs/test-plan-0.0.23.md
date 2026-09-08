@@ -135,7 +135,8 @@ either dispatches a payload ("Last hotspot: offer id=…") or surfaces
 One Ad tab (offer dialog with full payload).
 
 ### TC-15 — Landscape, embedded at 60% width
-**Steps:** Rotate the device to landscape, open the demo app's **Weekly Ad** tab.
+**Steps:** Rotate the device to landscape, open the demo app's **Weekly Ad** or
+**One Ad** tab (both share the harness).
 The screen becomes the client-style two-column layout: title bar (back/dates/search),
 location chip, the SDK in a 60% column, offers rail in the remaining 40%. Swipe pages,
 tap a product hotspot.
