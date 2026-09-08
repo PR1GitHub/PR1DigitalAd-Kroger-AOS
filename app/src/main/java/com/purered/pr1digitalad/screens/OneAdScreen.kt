@@ -31,13 +31,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.Dp
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.text.font.FontWeight
+import com.purered.pr1digitaladclassic.AdErrorPayload
 import com.purered.pr1digitaladclassic.AdExperience
 import com.purered.pr1digitaladclassic.ApiEnv
 import com.purered.pr1digitaladclassic.DigitalAd
+import com.purered.pr1digitaladclassic.AdErrorType
 import com.purered.pr1digitaladclassic.DigitalAdLibVersion
 import com.purered.pr1digitaladclassic.SpotClickPayload
 import com.purered.pr1digitaladclassic.ZoomButtonsConfig
-import kotlin.toString
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +53,8 @@ fun OneAdScreen(
 ) {
     var totalPages by remember { mutableStateOf(0) }
     var currentPageIndex by remember { mutableStateOf(0) }
+    // Newest-first log of onAdError callbacks, shown on screen for testing.
+    val errorLog = remember { mutableStateListOf<String>() }
 
     Scaffold(
         modifier = modifier,
@@ -84,6 +93,12 @@ fun OneAdScreen(
                 },
                 onPageChangedTrigger = { pageIndex ->
                     currentPageIndex = pageIndex
+                },
+                onAdErrorTrigger = { error ->
+                    val time = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+                    val pageSuffix = error.adPageId?.let { " (page $it)" } ?: ""
+                    errorLog.add(0, "[$time] ${error.type}: ${error.message}$pageSuffix")
+                    while (errorLog.size > 5) errorLog.removeAt(errorLog.size - 1)
                 }
             )
 
@@ -93,6 +108,30 @@ fun OneAdScreen(
                 fontSize = 16.sp,
                 text = "page ${currentPageIndex + 1} of $totalPages",
             )
+
+            // Visual log of onAdError callbacks (newest first, last 5 kept)
+            if (errorLog.isNotEmpty()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        modifier = Modifier.padding(start = 10.dp),
+                        text = "Ad errors",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFB00020)
+                    )
+                    TextButton(onClick = { errorLog.clear() }) {
+                        Text("Clear", fontSize = 12.sp)
+                    }
+                }
+                errorLog.forEach { entry ->
+                    Text(
+                        modifier = Modifier.padding(start = 10.dp, end = 10.dp, bottom = 2.dp),
+                        text = entry,
+                        fontSize = 12.sp,
+                        color = Color(0xFFB00020)
+                    )
+                }
+            }
         }
     }
 }
@@ -103,7 +142,8 @@ fun OneAd(
     viewHeight: Dp? = null,
     adExperience: AdExperience,
     onAdLoadedTrigger: (Int) -> Unit = {},
-    onPageChangedTrigger: (Int) -> Unit = {}
+    onPageChangedTrigger: (Int) -> Unit = {},
+    onAdErrorTrigger: (AdErrorPayload) -> Unit = {}
 ) {
 
     var adId = "649956ed-3ed4-4d68-b388-aa864a7668e8"
@@ -155,6 +195,10 @@ fun OneAd(
                 dialogPayload = payload
                 showDialog =
                     true // make true to visually see the payload in a alert box (for dev only)
+            },
+            onAdError = { error ->
+                Log.e("OneAdScreen", "onAdError: $error")
+                onAdErrorTrigger(error)
             }
         )
     }
