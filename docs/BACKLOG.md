@@ -28,7 +28,7 @@ Statuses: `open` / `in progress` / `fixed <version>` / `wontfix`.
 | H-5 | Model/naming debt: `isHorizontalAd`/`adPagesCount` ignored, `eventPageId` vs `adPageId`, lowercase enum constants, deprecated `forEachGesture`/`getScreenWidth` | low | open | |
 | H-6 | `-Xmetadata-version` is an internal compiler flag; supported path = build with an old Kotlin (AGP downgrade discussion) | low | open | Works + verified; revisit if it breaks on a toolchain bump |
 | H-7 | README one line; no client integration guide | low | open | |
-| H-8 | `onHotSpotClick` never exercised end-to-end: QA ad has zero hotmaps | medium | open | Need an adId/location with mapped offers |
+| H-8 | `onHotSpotClick` never exercised end-to-end: QA ad has zero hotmaps | medium | closed | Hotmapped QA ad found: `649956ed-3ed4-4d68-b388-aa864a7668e8` / loc `01800364` (6 pages, in OneAdScreen). Tap -> getOfferDetails -> full offer payload verified 2026-09-08 |
 
 ## Client compatibility contract (do not raise without client sign-off)
 

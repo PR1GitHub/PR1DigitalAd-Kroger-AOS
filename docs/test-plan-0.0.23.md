@@ -123,11 +123,13 @@ a signed build; the debug-APK cases above cover runtime behavior.)
 
 ### TC-14 — Hotspot tap (limited)
 **Steps:** Tap product areas on several pages.
-**Expected with the current QA ad:** nothing — ad `8fff1a9e…`/loc `70100005` has no
-hotmaps on any page (backlog H-8), so `onHotSpotClick`/`offerLoadFailed` cannot be
-exercised. If you have an adId with mapped offers, swap it into the host: a tap
-should either dispatch a payload (shown as "Last hotspot: …") or surface
-`offerLoadFailed` — never nothing.
+**Expected:** The host's default ad (`8fff1a9e…`/loc `70100005`) has no hotmaps, so
+taps do nothing there. Use the hotmapped QA ad instead — swap in adId
+`649956ed-3ed4-4d68-b388-aa864a7668e8` / location `01800364` (the one OneAdScreen in
+the demo app uses, 6 pages). A tap on a product area shows a loading overlay, then
+either dispatches a payload ("Last hotspot: offer id=…") or surfaces
+`offerLoadFailed` — never nothing. Verified end-to-end 2026-09-08 via the demo app's
+One Ad tab (offer dialog with full payload).
 
 ---
 
