@@ -134,6 +134,18 @@ either dispatches a payload ("Last hotspot: offer id=…") or surfaces
 `offerLoadFailed` — never nothing. Verified end-to-end 2026-09-08 via the demo app's
 One Ad tab (offer dialog with full payload).
 
+### TC-15 — Landscape, embedded at 60% width
+**Steps:** Rotate the device to landscape, open the demo app's **Weekly Ad** tab.
+The screen becomes the client-style two-column layout: title bar (back/dates/search),
+location chip, the SDK in a 60% column, offers rail in the remaining 40%. Swipe pages,
+tap a product hotspot.
+**Expected:** Ad renders correctly at 60% width inside the rounded card (scrollable
+vertically). Swipes page normally and the rail header tracks "page x of y". A hotspot
+tap resolves at the reduced scale and adds the offer card (image, price, title, Shop
+Deal) to the rail - proving hotmap coordinates rescale with display size. Rotating
+back to portrait restores the classic vertical screen. Known harness quirk: collected
+offers clear on rotation (demo state is not saved across configuration change).
+
 ---
 
 ## Results
@@ -154,6 +166,7 @@ One Ad tab (offer dialog with full payload).
 | TC-12 | | |
 | TC-13 | | |
 | TC-14 | | |
+| TC-15 | | |
 
 Tester: ____________  Date: ____________  Candidate: 0.0.23 (`-PlocalSdk`)
 
