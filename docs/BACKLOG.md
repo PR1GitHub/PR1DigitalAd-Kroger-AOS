@@ -14,7 +14,7 @@ Statuses: `open` / `in progress` / `fixed <version>` / `wontfix`.
 | B-5 | `weeklyAdService` global `var` reassigned inside composition; two `DigitalAd` instances clobber each other (also unkeyed `viewModel()` shares state) | medium | fixed 0.0.23 | Per-instance service via `remember(apiEnv, apiKey)`, keyed ViewModel. Residual: `HotMapViewModel` zoom flag still activity-scoped (cosmetic cross-talk between instances) |
 | B-6 | `getPageDetails` refetched per *virtual* page (x1000 looping pager); no cache | medium | fixed 0.0.23 | `AdPageDetailsCache` scoped via `remember(ad)` - dropped on every fresh ad load, failures never cached |
 | B-7 | Unchecked `as SuccessResult` cast; image failure silently kills hotmaps for the page | medium | fixed 0.0.23 | `AdPageView.kt` |
-| B-8 | Gesture conflicts: backward-swipe block at page 1 too broad; zoomed pan fights pager drag | low | open | |
+| B-8 | Gesture conflicts: backward-swipe block at page 1 too broad; zoomed pan fights pager drag | low | partially fixed 0.0.23 | Zoom gesture no longer consumes single-finger drags at 1x, so host screens embedding the ad in a scrollable column can scroll (client landscape layouts). Remaining: zoomed pan vs pager drag; page-1 backward-swipe block |
 | B-9 | No error surface for host apps: ad/page/offer failures invisible or SDK-internal only | high | fixed 0.0.23 | `onAdError` callback + `AdErrorType`/`AdErrorPayload`; folds in B-7 |
 
 ## Hygiene / operational

@@ -2,8 +2,12 @@ package com.purered.pr1digitaladclassic
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroidSize
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +33,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -37,6 +42,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 /*
 
@@ -226,38 +232,66 @@ fun ZoomableBoxContent(
                 )
             }
             .pointerInput(Unit) {
-                detectTransformGestures { _, pan, zoom, _ ->
+                // detectTransformGestures consumed EVERY drag past touch slop, including
+                // single-finger vertical drags at 1x zoom - so a host screen embedding
+                // the ad in its own scrollable column could never scroll (client
+                // landscape layouts). This loop claims a gesture only when it is a real
+                // zoom interaction: two or more pointers down, or any drag while
+                // already zoomed in. Unclaimed events flow to the pager and to the
+                // host's own scrolling untouched.
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    var zoomAccumulator = 1f
+                    var panAccumulator = Offset.Zero
+                    var pastTouchSlop = false
 
-                    if (!isTouching) {
-                        isTouching = true
-                        hotMapViewModel.onZoomStart()
-                        Log.d("ZoomTracker", "Zoom started")
-                    }
+                    do {
+                        val event = awaitPointerEvent()
+                        val pointersDown = event.changes.count { it.pressed }
+                        val engaged = pointersDown > 1 || scale > 1f
 
-                    if (!isTapDetected) {
+                        if (engaged) {
+                            val zoomChange = event.calculateZoom()
+                            val panChange = event.calculatePan()
 
-                        scale = (scale * zoom).coerceIn(1f, 5f)
+                            if (!pastTouchSlop) {
+                                zoomAccumulator *= zoomChange
+                                panAccumulator += panChange
+                                val centroidSize = event.calculateCentroidSize(useCurrent = false)
+                                val zoomMotion = abs(1 - zoomAccumulator) * centroidSize
+                                if (zoomMotion > viewConfiguration.touchSlop ||
+                                    panAccumulator.getDistance() > viewConfiguration.touchSlop
+                                ) {
+                                    pastTouchSlop = true
+                                }
+                            }
 
-                        val extraWidth =
-                            (scale - 1) * boxSize.width
+                            if (pastTouchSlop) {
+                                if (!isTouching) {
+                                    isTouching = true
+                                    hotMapViewModel.onZoomStart()
+                                    Log.d("ZoomTracker", "Zoom started")
+                                }
 
-                        val extraHeight =
-                            (scale - 1) * boxSize.height
+                                scale = (scale * zoomChange).coerceIn(1f, 5f)
 
-                        val maxX = extraWidth / 2
-                        val maxY = extraHeight / 2
+                                val extraWidth = (scale - 1) * boxSize.width
+                                val extraHeight = (scale - 1) * boxSize.height
+                                val maxX = extraWidth / 2
+                                val maxY = extraHeight / 2
 
-                        val adjustedPan = pan * 0.8f
+                                offset += panChange * 0.8f
+                                offset = Offset(
+                                    x = offset.x.coerceIn(-maxX, maxX),
+                                    y = offset.y.coerceIn(-maxY, maxY)
+                                )
 
-                        offset += adjustedPan
-
-                        offset = Offset(
-                            x = offset.x.coerceIn(-maxX, maxX),
-                            y = offset.y.coerceIn(-maxY, maxY)
-                        )
-                    }
-
-                    isTapDetected = false
+                                event.changes.forEach {
+                                    if (it.positionChanged()) it.consume()
+                                }
+                            }
+                        }
+                    } while (event.changes.any { it.pressed })
                 }
             }
             .pointerInput(Unit) {

@@ -143,7 +143,10 @@ tap a product hotspot.
 **Expected:** Ad renders correctly at 60% width inside the rounded card (scrollable
 vertically). Swipes page normally and the rail header tracks "page x of y". A hotspot
 tap resolves at the reduced scale and adds the offer card (image, price, title, Shop
-Deal) to the rail - proving hotmap coordinates rescale with display size. Rotating
+Deal) to the rail - proving hotmap coordinates rescale with display size. Vertical
+swipes over the ad scroll the surrounding column (single-finger drags at 1x zoom are
+no longer claimed by the zoom gesture); after this change, re-verify pinch zoom by
+hand (TC-10), which adb cannot simulate. Rotating
 back to portrait restores the classic vertical screen. Known harness quirk: collected
 offers clear on rotation (demo state is not saved across configuration change).
 
