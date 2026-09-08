@@ -76,8 +76,8 @@ error callback after success.
 ### TC-07 — Page-scoped errors (B-9)
 **Steps:** Load the ad normally. Enable airplane mode. Swipe forward 4–5 pages to
 reach pages whose data/images have not loaded yet.
-**Expected:** Affected pages show the SDK's inline "Error loading Page" text and/or
-shimmer; host receives `onAdError` with `pageDetailsFailed` and/or
+**Expected:** Affected pages show the SDK's warning placeholder (grey circle, yellow
+triangle, "Error loading this page") and/or shimmer; host receives `onAdError` with `pageDetailsFailed` and/or
 `pageImageFailed`, each carrying the `adPageId`. Paging keeps working — page-scoped
 errors never lock the pager, and the page indicator must track your swipes and hold
 position (verified: 4 swipes onto failing pages -> page 5, stable for 30s untouched).

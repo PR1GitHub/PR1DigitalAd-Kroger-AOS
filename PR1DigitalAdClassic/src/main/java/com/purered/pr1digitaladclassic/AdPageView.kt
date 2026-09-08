@@ -1,7 +1,13 @@
 package com.purered.pr1digitaladclassic
 
 import android.util.Log
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.forEachGesture
@@ -25,8 +31,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
@@ -38,7 +50,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -419,7 +433,11 @@ internal fun AdPageView(
         }
 
         if(imageState == "error"){
-            BasicText(text = "Error loading Page")
+            PageLoadErrorPlaceholder(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(440.dp)
+            )
         }
 
         AsyncImage(model = fileUrl, contentDescription = null, contentScale = ContentScale.FillWidth, onLoading = {
@@ -692,4 +710,68 @@ internal fun convertJsonToMapArea(jsonString: String): MapArea {
         eventPageContentId = jsonObject.optString("eventPageContentId", ""),
         content = mapAreaContent
     )
+}
+
+
+/*-- PAGE LOAD ERROR PLACEHOLDER --*/
+// Grey circle + yellow rounded warning triangle, drawn in-code so the SDK ships no
+// image assets and the icon stays crisp at any size.
+@Composable
+internal fun PageLoadErrorPlaceholder(
+    modifier: Modifier = Modifier,
+    message: String = "Error loading this page"
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(110.dp)
+                .background(Color(0xFFE9E9EB), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.size(58.dp)) {
+                val w = size.width
+                val h = size.height
+                val triangle = Path().apply {
+                    moveTo(w * 0.5f, h * 0.10f)
+                    lineTo(w * 0.94f, h * 0.86f)
+                    lineTo(w * 0.06f, h * 0.86f)
+                    close()
+                }
+                val yellow = Color(0xFFF6C445)
+                val corner = w * 0.16f
+                drawPath(triangle, yellow)
+                // A rounded stroke over the same path rounds the three corners.
+                drawPath(
+                    triangle,
+                    yellow,
+                    style = Stroke(
+                        width = corner,
+                        pathEffect = PathEffect.cornerPathEffect(corner),
+                        join = StrokeJoin.Round
+                    )
+                )
+                val dark = Color(0xFF33322E)
+                drawRoundRect(
+                    color = dark,
+                    topLeft = Offset(w * 0.5f - w * 0.05f, h * 0.34f),
+                    size = Size(w * 0.10f, h * 0.30f),
+                    cornerRadius = CornerRadius(w * 0.05f)
+                )
+                drawCircle(
+                    color = dark,
+                    radius = w * 0.06f,
+                    center = Offset(w * 0.5f, h * 0.76f)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(14.dp))
+        BasicText(
+            text = message,
+            style = TextStyle(color = Color(0xFF5F5F5F), fontSize = 14.sp)
+        )
+    }
 }

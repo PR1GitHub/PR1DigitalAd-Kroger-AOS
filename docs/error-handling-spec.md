@@ -67,7 +67,7 @@ Callbacks are delivered on the main/UI thread on both platforms.
 | `adLoadFailed` | nil | **true** | Shows "Something went wrong" + Try Again button |
 | `adEmpty` | nil | false | Renders nothing |
 | `pageDetailsFailed` | set | false | Page image may still render; hotspots disabled for that page |
-| `pageImageFailed` | set | false | Page shows an inline "Error loading Page" placeholder |
+| `pageImageFailed` | set | false | Page shows a warning placeholder (grey circle, yellow warning triangle, "Error loading this page") |
 | `offerLoadFailed` | set | false | Loading overlay ends; no `onHotSpotClick` payload dispatched |
 
 ### adLoadFailed
@@ -114,8 +114,9 @@ Notes:
 - **Trigger:** the on-screen page image request fails (the compressed display URL).
 - Reported **once per page appearance** (guarded by a flag) - image libraries can
   invoke error callbacks repeatedly; do not spam the host.
-- The SDK shows a small inline error placeholder for that page and keeps paging
-  functional.
+- The SDK shows a warning placeholder for that page (grey circle + yellow rounded
+  warning triangle + "Error loading this page", drawn in code - no image assets) and
+  keeps paging functional. iOS should render an equivalent placeholder.
 
 ### offerLoadFailed
 
