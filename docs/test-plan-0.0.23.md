@@ -79,7 +79,10 @@ reach pages whose data/images have not loaded yet.
 **Expected:** Affected pages show the SDK's inline "Error loading Page" text and/or
 shimmer; host receives `onAdError` with `pageDetailsFailed` and/or
 `pageImageFailed`, each carrying the `adPageId`. Paging keeps working — page-scoped
-errors never lock the pager. Disable airplane mode afterwards; revisiting a failed
+errors never lock the pager, and the page indicator must track your swipes and hold
+position (verified: 4 swipes onto failing pages -> page 5, stable for 30s untouched).
+Expect repeated callbacks for the same page if it recomposes while offline — failures
+are deliberately retried, so onAdError is an event stream, not one-per-problem. Disable airplane mode afterwards; revisiting a failed
 page retries (failures are not cached).
 
 ### TC-08 — Page-details caching (B-6)
