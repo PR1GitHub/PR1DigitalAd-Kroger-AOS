@@ -151,9 +151,13 @@ back to portrait restores the classic vertical screen. Known harness quirk: coll
 offers clear on rotation (demo state is not saved across configuration change).
 
 ### TC-16 — Height-bounded slot (client integration shape)
-**Steps:** Give `DigitalAd` a height-constrained container (the test host uses
-`Modifier.fillMaxWidth().height(340.dp)`, mirroring the client's weighted
-`OneAdContainer`). Load, tap a hotspot, swipe.
+**Steps:** Give `DigitalAd` a height-constrained container. The test host uses
+`Modifier.fillMaxWidth().fillMaxHeight(0.5f)` (half the screen, the client's stated
+target); also verified at `0.3f` and at a fixed `340.dp`. Load, tap a hotspot, swipe.
+**Integration note for clients:** a fractional height (`fillMaxHeight(f)`, `weight`)
+only constrains when the PARENT is height-bounded. Inside a `verticalScroll`
+container, height is unbounded and fractions are a no-op (standard Compose
+behavior) - use a fixed `height(x.dp)` there, or keep the ad outside the scrollable.
 **Expected:** The full page fits inside the slot - nothing cut off top or bottom -
 centered horizontally at its natural aspect ratio, with the indicator dots visible
 inside the slot. Hotspot taps resolve to the correct offer at the reduced size, and
