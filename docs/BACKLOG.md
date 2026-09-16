@@ -16,6 +16,7 @@ Statuses: `open` / `in progress` / `fixed <version>` / `wontfix`.
 | B-7 | Unchecked `as SuccessResult` cast; image failure silently kills hotmaps for the page | medium | fixed 0.0.23 | `AdPageView.kt` |
 | B-8 | Gesture conflicts: backward-swipe block at page 1 too broad; zoomed pan fights pager drag | low | partially fixed 0.0.23 | Zoom gesture no longer consumes single-finger drags at 1x, so host screens embedding the ad in a scrollable column can scroll (client landscape layouts). Remaining: zoomed pan vs pager drag; page-1 backward-swipe block |
 | B-9 | No error surface for host apps: ad/page/offer failures invisible or SDK-internal only | high | fixed 0.0.23 | `onAdError` callback + `AdErrorType`/`AdErrorPayload`; folds in B-7 |
+| B-10 | Pages cut off when the host bounds the ad's height (e.g. a weighted slot): sizing was width-driven only | high | fixed 0.0.24 | Bounded height -> each page fits BOTH constraints at its own aspect ratio, centered; hotspot scaling unaffected (driven by measured display size). Reported by the client integration |
 
 ## Hygiene / operational
 

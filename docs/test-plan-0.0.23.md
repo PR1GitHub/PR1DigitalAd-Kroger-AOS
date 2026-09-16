@@ -150,6 +150,16 @@ hand (TC-10), which adb cannot simulate. Rotating
 back to portrait restores the classic vertical screen. Known harness quirk: collected
 offers clear on rotation (demo state is not saved across configuration change).
 
+### TC-16 — Height-bounded slot (client integration shape)
+**Steps:** Give `DigitalAd` a height-constrained container (the test host uses
+`Modifier.fillMaxWidth().height(340.dp)`, mirroring the client's weighted
+`OneAdContainer`). Load, tap a hotspot, swipe.
+**Expected:** The full page fits inside the slot - nothing cut off top or bottom -
+centered horizontally at its natural aspect ratio, with the indicator dots visible
+inside the slot. Hotspot taps resolve to the correct offer at the reduced size, and
+paging works. In unconstrained containers (scrollable columns) the ad still fills
+the width as before.
+
 ---
 
 ## Results
@@ -171,6 +181,7 @@ offers clear on rotation (demo state is not saved across configuration change).
 | TC-13 | | |
 | TC-14 | | |
 | TC-15 | | |
+| TC-16 | | |
 
 Tester: ____________  Date: ____________  Candidate: 0.0.23 (`-PlocalSdk`)
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -48,6 +50,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -300,11 +303,22 @@ internal fun HorizontalDigitalAdView(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-    ) {
+    // Height responsiveness: hosts that bound the ad's height (e.g. a weighted slot
+    // in a Column) used to get pages cut off, because fillMaxWidth().aspectRatio can
+    // only derive height from width. When the incoming height is bounded, each page
+    // is sized to fit BOTH constraints at its own aspect ratio and centered. Hotspot
+    // scaling is unaffected: it is driven by the measured display size, not by an
+    // assumed width. Unbounded hosts (scrollable columns) keep width-driven sizing.
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val fitToHeight = constraints.hasBoundedHeight
+        val pageMaxWidth = maxWidth
+        // Keep room under the pager for the page-indicator row (its paddings + dots).
+        val pageMaxHeight =
+            if (fitToHeight) (maxHeight - 40.dp).coerceAtLeast(80.dp) else Dp.Unspecified
+
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
         ZoomableBoxContent(
             modifier = Modifier
                 .fillMaxWidth()
@@ -319,12 +333,23 @@ internal fun HorizontalDigitalAdView(
                 ) { virtualPageIndex ->
                     val actualPageIndex = virtualPageIndex % actualPageCount
                     val adPage = ad.pages[actualPageIndex]
+                    val pageRatio = pageAspectRatios[actualPageIndex] ?: defaultAspectRatio
                     if (adPage.fileURL.isNotEmpty()) {
+                        Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                        ) {
                         AdPageView(
                             adPage = adPage,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(pageAspectRatios[actualPageIndex] ?: defaultAspectRatio),
+                            modifier = if (fitToHeight) {
+                                Modifier
+                                    .width(min(pageMaxWidth, pageMaxHeight * pageRatio))
+                                    .aspectRatio(pageRatio)
+                            } else {
+                                Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(pageRatio)
+                            },
                             adId = adId,
                             location = location,
                             adService = adService,
@@ -347,6 +372,7 @@ internal fun HorizontalDigitalAdView(
                                 }
                             }
                         )
+                        }
                     }
                 }
 
@@ -384,6 +410,7 @@ internal fun HorizontalDigitalAdView(
                 }
             }
         )
+        }
     }
 }
 

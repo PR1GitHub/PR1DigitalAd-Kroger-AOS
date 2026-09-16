@@ -160,3 +160,48 @@ Client-simulation host app renders `lastError` on screen and logs every callback
 - `savelogs` telemetry failures stay internal.
 - Vertical/classic mode: same error reporting applies; only `onAdPageChanged` is
   absent there (deferred, backlog B-4).
+
+## The web port (PR1DigitalAd 0.1.4)
+
+The JS library implements this contract as
+`onAdError(payload, adRef)`, with the same five types and the same four payload
+fields. Source: `Lab/KrogerWebPrototype/lib/PR1DigitalAd_0.1.4.js`; its checks
+are `fixtures/errors.html`, which forces every failure with a fetch stub.
+
+Deliberate differences, none of which change what a shared host handler can do:
+
+- **Two extra types, for two web-only features.** `searchFailed` (the ad's
+  search endpoint) and `pdfDownloadFailed` (the Print PDF button). Android has
+  neither feature and never sends them.
+- **A second argument.** `onAdError(payload, adRef)` — every other web callback
+  already takes that ad reference. The payload is identical and frozen.
+- **Page errors are held until `onAdLoaded`.** The web library resolves every
+  page's details before it reports the ad as loaded, so page failures happen
+  first and would otherwise arrive first. They are queued and flushed straight
+  after `onAdLoaded`, which puts the host's callback order back in step with
+  Android's. A failed ad load releases them instead, since no `onAdLoaded` is
+  coming.
+- **One image request, not two.** Hotspots are scaled from the displayed
+  image's `naturalWidth`, so a failed page image reports `pageImageFailed`
+  only — never the `pageDetailsFailed` that Android's separate
+  original-size fetch produces. The equivalent fallback path exists in the web
+  code but is unreachable in practice.
+- **A failed page image drops that page's hotspots**, so nothing invisible
+  stays clickable or tabbable over the placeholder. The placeholder itself is
+  drawn in code to the same design (grey circle, rounded yellow triangle,
+  "Error loading this page").
+- **Page errors can arrive for pages the reader has not seen.** Web loads all
+  page details up front and pre-loads artwork in the background; Android loads
+  each page as it is composed.
+- **`adLoadFailed` has one extra trigger:** an experience stylesheet that fails
+  to load. The ad is unusable without it, the retry panel is drawn with its own
+  injected styles, and Try Again re-attempts the stylesheet.
+- **No `savelogs`**, so that exclusion does not apply.
+- **`onOfferError({offerId, reason})` is kept** alongside `offerLoadFailed` for
+  hosts written against 0.1.3, with reasons `no-offer-attached`, `offer-empty`
+  and `offer-lookup-failed`.
+
+Same as Android: failures are never cached, so a re-render asks again and
+reports again; one failure is one callback; page-scoped errors never stop
+paging; and nothing is thrown — the web `ready` promise resolves once the ad or
+the retry panel is on screen, and never rejects.
