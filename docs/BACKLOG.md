@@ -33,9 +33,19 @@ Statuses: `open` / `in progress` / `fixed <version>` / `wontfix`.
 
 ## Client compatibility contract (do not raise without client sign-off)
 
-compileSdk 36 · Kotlin metadata 2.1.0 · kotlin-stdlib 2.1.21 · coil-compose 2.2.2 ·
+compileSdk 36 · Kotlin metadata 2.1.0 · kotlin-stdlib 2.1.21 · coil3 3.0.4 ·
 compose-bom 2025.11.01 · lifecycle 2.10.0 · minSdk 24. Validate every release with
 `test-host/` before tagging (`-PlocalSdk=<ver>` for candidates).
+
+The client platform confirmed its Coil 3 pin on 2026-09-23: **3.3.0**, the newest
+Coil 3 whose kotlin-stdlib 2.2 their Kotlin 2.1.21 compiler can still read (3.4+
+needs stdlib 2.3, 3.5+ brings compose 1.11). Validated both ways in `test-host/`:
+default pins 3.3.0, `-PclientCoil2` pins their pre-upgrade Coil 2.2.2.
+
+Coil 3 is built against its oldest stable release on purpose: the client's pinned
+Coil 3 version always wins resolution, so the SDK must never compile against a newer
+one (the 0.0.21 crash). Coil 2 and 3 use different coordinates and packages and run
+side by side, so clients still on Coil 2 are unaffected.
 
 ## Fixed this engagement
 

@@ -15,7 +15,7 @@ plugins {
 // publication and BuildConfig.LIB_VERSION read from here so they cannot drift apart.
 val libVersion: String = (project.findProperty("version") as? String)
     ?.takeIf { it.isNotBlank() && it != "unspecified" }
-    ?: "0.0.24"
+    ?: "0.0.25"
 
 android {
     namespace = "com.purered.pr1digitaladclassic"
@@ -109,6 +109,8 @@ dependencies {
     implementation (libs.androidx.compose.ui.tooling.preview)
     debugImplementation (libs.androidx.compose.ui.tooling)
     implementation (libs.coil.compose)
+    // Coil 3 ships no network loader by default; without this every page image fails.
+    implementation (libs.coil.network.okhttp)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.retrofit)

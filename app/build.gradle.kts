@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
     implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     implementation("androidx.compose.material:material-icons-core")
 
     testImplementation(libs.junit)

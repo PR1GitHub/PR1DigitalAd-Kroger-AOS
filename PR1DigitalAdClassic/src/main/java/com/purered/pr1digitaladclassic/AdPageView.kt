@@ -55,10 +55,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import coil.imageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
+import coil3.compose.AsyncImage
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.maxBitmapSize
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import kotlin.math.absoluteValue
@@ -126,9 +127,12 @@ internal fun AdPageView(
                     ))
                     Logger.i("${logData1.value.appDetails}", saveLogs = logData1, sendToDB = saveLogEnabled)
 
+                    // Coil 3 caps decodes at 4096px by default; lift the cap so the
+                    // measured size is the true source size the hotspots are authored against.
                     val request = ImageRequest.Builder(context)
                         .data(fileUrl)
-                        .size(coil.size.Size.ORIGINAL)
+                        .size(coil3.size.Size.ORIGINAL)
+                        .maxBitmapSize(coil3.size.Size.ORIGINAL)
                         .build()
                     // The image's intrinsic dimensions are what the hotspot coordinates
                     // are scaled against - without them the hotspots cannot render. The
@@ -136,8 +140,8 @@ internal fun AdPageView(
                     // swallowed by the outer catch, so hotspots vanished silently.
                     when (val result = context.imageLoader.execute(request)) {
                         is SuccessResult -> {
-                            imageWidth = result.drawable.intrinsicWidth.toFloat()
-                            imageHeight = result.drawable.intrinsicHeight.toFloat()
+                            imageWidth = result.image.width.toFloat()
+                            imageHeight = result.image.height.toFloat()
 
                             var localPageHotMaps: List<MapArea> = emptyList()
                             adPageData.contents.forEachIndexed { index, pageContent ->
