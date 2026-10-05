@@ -81,8 +81,6 @@ internal fun AdPageView(
     pageDetailsCache: AdPageDetailsCache,
     onHotSpotClick: (payload: SpotClickPayload) -> Unit,
     key: Int,
-    pageNumber: Int = 0,
-    pageCount: Int = 0,
     saveLogEnabled: Boolean,
     isScrollable: Boolean = true,
     onSizeCalculated: ((Size) -> Unit)? = null,
@@ -457,7 +455,7 @@ internal fun AdPageView(
 
         // Was contentDescription = null: the page itself was invisible to screen readers,
         // which could reach the hotspots but never the page they sit on.
-        AsyncImage(model = fileUrl, contentDescription = buildAdPageContentDescription(adPage, pageNumber, pageCount), contentScale = ContentScale.FillWidth, onLoading = {
+        AsyncImage(model = fileUrl, contentDescription = buildAdPageContentDescription(adPage), contentScale = ContentScale.FillWidth, onLoading = {
             imageState = "loading"
         }, modifier = Modifier
             .fillMaxWidth()
@@ -697,14 +695,10 @@ private fun DrawHotMaps(
     }
 }
 
-private fun buildAdPageContentDescription(adPage: AdPage?, pageNumber: Int, pageCount: Int): String {
-    val printedPage = adPage?.page?.takeIf { it.isNotBlank() }
-    return when {
-        pageNumber > 0 && pageCount > 0 -> "Weekly ad page $pageNumber of $pageCount"
-        printedPage != null -> "Weekly ad page $printedPage"
-        else -> "Weekly ad page"
-    }
-}
+// Deliberately carries no page number: the client's screen-reader script does not expect
+// the image to recite an index. The position is announced once by the indicator row's live
+// region instead, so a user is told where they are without every page repeating it.
+private fun buildAdPageContentDescription(adPage: AdPage?): String = "Weekly ad page"
 
 private fun buildHotspotContentDescription(mapArea: MapArea): String {
     val content = mapArea.content

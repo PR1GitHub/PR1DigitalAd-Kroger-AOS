@@ -38,8 +38,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -47,6 +46,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -389,8 +389,6 @@ internal fun HorizontalDigitalAdView(
                             pageDetailsCache = pageDetailsCache,
                             onHotSpotClick = onHotSpotClick,
                             key = virtualPageIndex,
-                            pageNumber = actualPageIndex + 1,
-                            pageCount = actualPageCount,
                             saveLogEnabled = ad.isLogEnabled,
                             isScrollable = false,
                             onAdError = onAdError,
@@ -483,8 +481,6 @@ internal fun VerticalDigitalAdView(
                                     pageDetailsCache = pageDetailsCache,
                                     onHotSpotClick = onHotSpotClick,
                                     key = index,
-                                    pageNumber = index + 1,
-                                    pageCount = ad.pages.size,
                                     saveLogEnabled = ad.isLogEnabled,
                                     isScrollable = false,
                                     onAdError = onAdError
@@ -521,10 +517,13 @@ internal fun VerticalDigitalAdView(
 // Dots on a side that still has pages beyond the block shrink towards the edge.
 private const val MaxVisibleIndicatorDots = 10
 private val IndicatorDotSize = 8.dp
-// Dot + gap is the distance between tap targets. 24.dp is the WCAG 2.5.8 minimum target
-// size; the old 8.dp gap left 16.dp targets, well under it. 10 dots still fit a 320.dp
-// screen (10 x 24 = 240.dp).
-private val IndicatorDotSpacing = 16.dp
+// Dot + gap is the distance between tap targets, and it has to be the full 48.dp Android
+// minimum rather than WCAG's 24.dp: accessibility services grow any smaller target to
+// 48.dp and then clip it against its neighbour, which slid every dot's reported bounds
+// half a slot sideways and put the screen reader's focus rectangle between two dots.
+// At 48.dp the dots report exactly the bounds they are drawn at. Dots that no longer fit
+// the width are dropped from the visible band (see below), not squeezed.
+private val IndicatorDotSpacing = 40.dp
 // Each dot's tap target: as wide as the pitch, and tall enough to be comfortable. The row
 // reserves IndicatorRowHeight below the pager, so height-bounded hosts still fit a page.
 private val IndicatorTouchHeight = 44.dp
@@ -542,7 +541,16 @@ internal fun PagerIndicators(
 ) {
     if (pageCount <= 1) return
 
-    val visibleCount = minOf(pageCount, maxVisibleDots.coerceAtLeast(1))
+    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+
+    val dotRadiusPx = with(LocalDensity.current) { dotSize.toPx() / 2f }
+    val slotWidth = dotSize + dotSpacing
+    // 48.dp slots are wide, so on a narrow host only so many fit. Showing fewer dots is
+    // better than overflowing the ad's width.
+    val fitCount =
+        if (constraints.hasBoundedWidth) (maxWidth / slotWidth).toInt().coerceAtLeast(1)
+        else maxVisibleDots
+    val visibleCount = minOf(pageCount, maxVisibleDots.coerceAtLeast(1), fitCount)
     // The band is the block of pages the current page falls in. The trailing block is
     // pulled back so it stays full width instead of rendering a stub of a few dots.
     val windowStart = (currentPage / visibleCount * visibleCount)
@@ -551,14 +559,29 @@ internal fun PagerIndicators(
     val hasMoreBefore = windowStart > 0
     val hasMoreAfter = windowEnd < pageCount - 1
 
+    val slotPx = with(LocalDensity.current) { slotWidth.toPx() }
+
     Row(
         // The row itself carries the live page status. Screen readers announce it on every
         // page change - swiping the pager used to be completely silent - and a user landing
         // here hears where they are before stepping through the dots.
-        modifier = modifier.semantics {
-            liveRegion = LiveRegionMode.Polite
-            contentDescription = "Page ${currentPage + 1} of $pageCount"
-        },
+        modifier = Modifier
+            .semantics {
+                liveRegion = LiveRegionMode.Polite
+                contentDescription = "Page ${currentPage + 1} of $pageCount"
+            }
+            // Taps are handled here, for the whole strip, rather than per dot. A pointer
+            // input modifier on a dot gets its touch bounds grown to the 48.dp minimum;
+            // neighbouring dots then overlap and each dot's REPORTED bounds slide half a
+            // slot sideways, which is why the screen reader's focus rectangle sat between
+            // two dots. Without pointer input of their own, the dots report exactly the
+            // bounds they are drawn at.
+            .pointerInput(windowStart, visibleCount, slotPx) {
+                detectTapGestures { tap ->
+                    val slot = (tap.x / slotPx).toInt().coerceIn(0, visibleCount - 1)
+                    onPageSelected(windowStart + slot)
+                }
+            },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -584,19 +607,18 @@ internal fun PagerIndicators(
 
             val isCurrent = index == currentPage
 
+            // ONE node per dot: the touch target, the label, the state, the action and
+            // the drawn dot itself. Any extra composable inside this Box becomes a second
+            // accessibility node, and the two nodes' bounds end up half a slot apart - the
+            // focus rectangle then lands between two dots instead of on the focused one,
+            // which is what the client saw after the first ADA pass. Drawing the dot
+            // instead of nesting a Box keeps the node, the tap area and the pixels aligned.
             Box(
                 modifier = Modifier
                     // Keeps the tap target (and the pitch between dots) constant while
                     // the dot itself scales.
                     .width(dotSize + dotSpacing)
                     .height(IndicatorTouchHeight)
-                    // The label, the state and the action all have to sit on ONE node.
-                    // With Modifier.clickable they did not: the label and the click target
-                    // came out as separate accessibility nodes whose bounds were offset by
-                    // a dot, so touch exploration announced "page 1" while sitting on the
-                    // dot that jumps to page 2 - the wrong index the client reported. The
-                    // semantics-plus-pointerInput pairing below is what the hotspots use
-                    // and it produces a single node with the right bounds.
                     .semantics(mergeDescendants = true) {
                         role = Role.Tab
                         // selected is what tells a screen reader WHICH page is current;
@@ -608,20 +630,18 @@ internal fun PagerIndicators(
                             true
                         }
                     }
-                    .focusable(interactionSource = interactionSource)
                     .pointerInput(index) {
                         detectTapGestures { onPageSelected(index) }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(dotSize)
-                        .scale(scale)
-                        .clip(CircleShape)
-                        .background(color)
-                )
-            }
+                    }
+                    .drawBehind {
+                        drawCircle(
+                            color = color,
+                            radius = dotRadiusPx * scale,
+                            center = this.center
+                        )
+                    }
+            )
         }
+    }
     }
 }
