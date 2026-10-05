@@ -39,6 +39,9 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -352,14 +355,19 @@ fun ZoomableBoxContent(
                             scale = (scale + 1f)
                                 .coerceAtMost(5f)
                         },
-                        modifier = Modifier.size(48.dp),
+                        // The glyph is the whole button, so without this a screen reader
+                        // announced these two controls as "plus" and "underscore".
+                        modifier = Modifier
+                            .size(48.dp)
+                            .semantics { contentDescription = "Zoom in" },
                         containerColor = Color.Black.copy(alpha = 0.5f),
                         elevation = FloatingActionButtonDefaults.elevation(0.dp)
                     ) {
                         Text(
                             text = "+",
                             color = Color.White,
-                            fontSize = 30.sp
+                            fontSize = 30.sp,
+                            modifier = Modifier.clearAndSetSemantics { }
                         )
                     }
 
@@ -374,15 +382,19 @@ fun ZoomableBoxContent(
                         },
                         modifier = Modifier
                             .size(48.dp)
-                            .offset(y = (-2).dp),
+                            .offset(y = (-2).dp)
+                            .semantics { contentDescription = "Zoom out" },
                         containerColor = Color.Black.copy(alpha = 0.5f),
                         elevation = FloatingActionButtonDefaults.elevation(0.dp)
                     ) {
+                        // Was an underscore nudged up 13.dp to look like a minus sign: it
+                        // read as "underscore" and drifted out of the button as the user's
+                        // font scale grew. A real minus glyph centres itself.
                         Text(
-                            text = "_",
+                            text = "\u2212",
                             color = Color.White,
                             fontSize = 30.sp,
-                            modifier = Modifier.offset(y = (-13).dp)
+                            modifier = Modifier.clearAndSetSemantics { }
                         )
                     }
                 }

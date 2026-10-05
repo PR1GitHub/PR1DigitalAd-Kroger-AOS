@@ -3,7 +3,8 @@ package com.purered.pr1digitaladclassic
 import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -44,9 +46,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.CollectionInfo
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -153,6 +162,10 @@ fun DigitalAd(
                         .fillMaxWidth()
                         .heightIn(min = 440.dp)
                         .padding(16.dp)
+                        .semantics {
+                            contentDescription = "Loading weekly ad"
+                            liveRegion = LiveRegionMode.Polite
+                        }
                         .shimmerEffect()
                 )
             }
@@ -166,9 +179,20 @@ fun DigitalAd(
                         )
                     )
                 }
-                Column(modifier = Modifier.align(Alignment.Center)) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .semantics { liveRegion = LiveRegionMode.Assertive }
+                ) {
                     Text(text = "Something went wrong. Please try again.")
-                    TextButton(onClick = { weeklyAdViewModel.reloadWeeklyAd() }) {
+                    TextButton(
+                        onClick = { weeklyAdViewModel.reloadWeeklyAd() },
+                        // "Try Again" alone gives a screen-reader user no idea what is
+                        // being retried, since the message above is a separate node.
+                        modifier = Modifier.semantics {
+                            contentDescription = "Try again, reload the weekly ad"
+                        }
+                    ) {
                         Text("Try Again")
                     }
                 }
@@ -314,7 +338,7 @@ internal fun HorizontalDigitalAdView(
         val pageMaxWidth = maxWidth
         // Keep room under the pager for the page-indicator row (its paddings + dots).
         val pageMaxHeight =
-            if (fitToHeight) (maxHeight - 40.dp).coerceAtLeast(80.dp) else Dp.Unspecified
+            if (fitToHeight) (maxHeight - IndicatorRowHeight).coerceAtLeast(80.dp) else Dp.Unspecified
 
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -328,7 +352,16 @@ internal fun HorizontalDigitalAdView(
                     state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .nestedScroll(directionalScrollConnection),
+                        .nestedScroll(directionalScrollConnection)
+                        // Looping runs on a virtual page count of pages x 1000, which is
+                        // what accessibility services would otherwise report ("item 3000
+                        // of 6000"). Describe the collection with the real page count.
+                        .semantics {
+                            collectionInfo = CollectionInfo(
+                                rowCount = 1,
+                                columnCount = actualPageCount
+                            )
+                        },
                     verticalAlignment = Alignment.Top
                 ) { virtualPageIndex ->
                     val actualPageIndex = virtualPageIndex % actualPageCount
@@ -356,6 +389,8 @@ internal fun HorizontalDigitalAdView(
                             pageDetailsCache = pageDetailsCache,
                             onHotSpotClick = onHotSpotClick,
                             key = virtualPageIndex,
+                            pageNumber = actualPageIndex + 1,
+                            pageCount = actualPageCount,
                             saveLogEnabled = ad.isLogEnabled,
                             isScrollable = false,
                             onAdError = onAdError,
@@ -448,6 +483,8 @@ internal fun VerticalDigitalAdView(
                                     pageDetailsCache = pageDetailsCache,
                                     onHotSpotClick = onHotSpotClick,
                                     key = index,
+                                    pageNumber = index + 1,
+                                    pageCount = ad.pages.size,
                                     saveLogEnabled = ad.isLogEnabled,
                                     isScrollable = false,
                                     onAdError = onAdError
@@ -484,7 +521,14 @@ internal fun VerticalDigitalAdView(
 // Dots on a side that still has pages beyond the block shrink towards the edge.
 private const val MaxVisibleIndicatorDots = 10
 private val IndicatorDotSize = 8.dp
-private val IndicatorDotSpacing = 8.dp
+// Dot + gap is the distance between tap targets. 24.dp is the WCAG 2.5.8 minimum target
+// size; the old 8.dp gap left 16.dp targets, well under it. 10 dots still fit a 320.dp
+// screen (10 x 24 = 240.dp).
+private val IndicatorDotSpacing = 16.dp
+// Each dot's tap target: as wide as the pitch, and tall enough to be comfortable. The row
+// reserves IndicatorRowHeight below the pager, so height-bounded hosts still fit a page.
+private val IndicatorTouchHeight = 44.dp
+internal val IndicatorRowHeight = IndicatorTouchHeight + 24.dp
 
 @Composable
 internal fun PagerIndicators(
@@ -508,7 +552,13 @@ internal fun PagerIndicators(
     val hasMoreAfter = windowEnd < pageCount - 1
 
     Row(
-        modifier = modifier,
+        // The row itself carries the live page status. Screen readers announce it on every
+        // page change - swiping the pager used to be completely silent - and a user landing
+        // here hears where they are before stepping through the dots.
+        modifier = modifier.semantics {
+            liveRegion = LiveRegionMode.Polite
+            contentDescription = "Page ${currentPage + 1} of $pageCount"
+        },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -532,19 +582,36 @@ internal fun PagerIndicators(
             val color = if (currentPage == index) Color.DarkGray else Color.LightGray
             val interactionSource = remember { MutableInteractionSource() }
 
+            val isCurrent = index == currentPage
+
             Box(
                 modifier = Modifier
                     // Keeps the tap target (and the pitch between dots) constant while
                     // the dot itself scales.
-                    .size(dotSize + dotSpacing)
-                    .semantics {
-                        role = Role.Button
-                        contentDescription = "Go to page ${index + 1} of $pageCount"
+                    .width(dotSize + dotSpacing)
+                    .height(IndicatorTouchHeight)
+                    // The label, the state and the action all have to sit on ONE node.
+                    // With Modifier.clickable they did not: the label and the click target
+                    // came out as separate accessibility nodes whose bounds were offset by
+                    // a dot, so touch exploration announced "page 1" while sitting on the
+                    // dot that jumps to page 2 - the wrong index the client reported. The
+                    // semantics-plus-pointerInput pairing below is what the hotspots use
+                    // and it produces a single node with the right bounds.
+                    .semantics(mergeDescendants = true) {
+                        role = Role.Tab
+                        // selected is what tells a screen reader WHICH page is current;
+                        // without it every dot read identically.
+                        selected = isCurrent
+                        contentDescription = "Page ${index + 1} of $pageCount"
+                        onClick(label = "Go to page ${index + 1}") {
+                            onPageSelected(index)
+                            true
+                        }
                     }
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null
-                    ) { onPageSelected(index) },
+                    .focusable(interactionSource = interactionSource)
+                    .pointerInput(index) {
+                        detectTapGestures { onPageSelected(index) }
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Box(

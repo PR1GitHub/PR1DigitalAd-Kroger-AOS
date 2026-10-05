@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -39,14 +41,17 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -76,6 +81,8 @@ internal fun AdPageView(
     pageDetailsCache: AdPageDetailsCache,
     onHotSpotClick: (payload: SpotClickPayload) -> Unit,
     key: Int,
+    pageNumber: Int = 0,
+    pageCount: Int = 0,
     saveLogEnabled: Boolean,
     isScrollable: Boolean = true,
     onSizeCalculated: ((Size) -> Unit)? = null,
@@ -432,6 +439,10 @@ internal fun AdPageView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(440.dp)
+                    .semantics {
+                        contentDescription = "Loading weekly ad page"
+                        liveRegion = LiveRegionMode.Polite
+                    }
                     .shimmerEffect()
             )
         }
@@ -444,7 +455,9 @@ internal fun AdPageView(
             )
         }
 
-        AsyncImage(model = fileUrl, contentDescription = null, contentScale = ContentScale.FillWidth, onLoading = {
+        // Was contentDescription = null: the page itself was invisible to screen readers,
+        // which could reach the hotspots but never the page they sit on.
+        AsyncImage(model = fileUrl, contentDescription = buildAdPageContentDescription(adPage, pageNumber, pageCount), contentScale = ContentScale.FillWidth, onLoading = {
             imageState = "loading"
         }, modifier = Modifier
             .fillMaxWidth()
@@ -523,6 +536,20 @@ internal fun AdPageView(
                     .height(hDp)
                     .fillMaxSize() // Fill the entire screen
                     .background(Color.Black.copy(alpha = 0.6f))  // Set the background color
+                    .semantics {
+                        contentDescription = "Loading offer details"
+                        liveRegion = LiveRegionMode.Polite
+                    }
+                    // Consume on the initial pass so taps cannot reach the hotspots
+                    // underneath while an offer is already on its way.
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                awaitPointerEvent(PointerEventPass.Initial).changes
+                                    .forEach { it.consume() }
+                            }
+                        }
+                    }
             ) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)  // Center the progress indicator
@@ -537,6 +564,11 @@ internal fun AdPageView(
 } // Box
 
 
+
+// WCAG 2.5.8 minimum target size, applied to hotspots the artwork draws smaller.
+private val MinHotspotTarget = 24.dp
+// Focus ring for keyboard / Switch Access users; the hotspots themselves are invisible.
+private val HotspotFocusColor = Color(0xFF1A73E8)
 
 @Composable
 private fun DrawHotMaps(
@@ -575,14 +607,30 @@ private fun DrawHotMaps(
             val top = floor(mapArea.y1).dp
             val right = floor(mapArea.x2).dp
             val bottom = floor(mapArea.y2).dp
+            // Hotspot rectangles come from the ad artwork, so a small offer can end up with
+            // a target only a few dp across - 9% of the hotspots on the QA ad were under
+            // 48.dp and two under 24.dp. Grow those around their own centre to the WCAG
+            // 2.5.8 minimum. The Android 48.dp guideline is deliberately not used here: at
+            // that size neighbouring offers on a dense page would start covering each other.
+            val drawnWidth = right - left
+            val drawnHeight = bottom - top
+            val targetWidth = maxOf(drawnWidth, MinHotspotTarget)
+            val targetHeight = maxOf(drawnHeight, MinHotspotTarget)
+            var isFocused by remember(mapArea) { mutableStateOf(false) }
             // Color.LightGray.copy(alpha = 0.4f)
             Box(
                 modifier = Modifier
-                    .offset(x = left, y = top)
-                    .width(right - left)
-                    .height(bottom - top)
+                    .offset(
+                        x = left - (targetWidth - drawnWidth) / 2,
+                        y = top - (targetHeight - drawnHeight) / 2
+                    )
+                    .width(targetWidth)
+                    .height(targetHeight)
                     .background(Color.Transparent)
-                    .border(1.dp, Color.Transparent)
+                    // Keyboard and Switch Access users get no hover or touch exploration,
+                    // so an invisible focus ring would leave them with no idea where they
+                    // are on the page.
+                    .border(2.dp, if (isFocused) HotspotFocusColor else Color.Transparent)
                     .semantics(mergeDescendants = true) {
                         role = Role.Button
                         contentDescription = buildHotspotContentDescription(mapArea)
@@ -591,6 +639,11 @@ private fun DrawHotMaps(
                             true
                         }
                     }
+                    // Semantics alone are reachable by TalkBack but are not a focus target:
+                    // without this, keyboard and Switch Access users could not reach a
+                    // single offer on the page.
+                    .onFocusChanged { isFocused = it.isFocused }
+                    .focusable()
                     .pointerInput(Unit) {
                         forEachGesture {
                             awaitPointerEventScope {
@@ -644,12 +697,12 @@ private fun DrawHotMaps(
     }
 }
 
-private fun buildAdPageContentDescription(adPage: AdPage?): String {
-    val pageNumber = adPage?.page?.takeIf { it.isNotBlank() }
-    return if (pageNumber != null) {
-        "Weekly ad page $pageNumber"
-    } else {
-        "Weekly ad page"
+private fun buildAdPageContentDescription(adPage: AdPage?, pageNumber: Int, pageCount: Int): String {
+    val printedPage = adPage?.page?.takeIf { it.isNotBlank() }
+    return when {
+        pageNumber > 0 && pageCount > 0 -> "Weekly ad page $pageNumber of $pageCount"
+        printedPage != null -> "Weekly ad page $printedPage"
+        else -> "Weekly ad page"
     }
 }
 
@@ -726,7 +779,10 @@ internal fun PageLoadErrorPlaceholder(
     message: String = "Error loading this page"
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier.semantics(mergeDescendants = true) {
+            contentDescription = message
+            liveRegion = LiveRegionMode.Polite
+        },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

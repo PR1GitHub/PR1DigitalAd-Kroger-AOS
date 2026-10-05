@@ -18,6 +18,31 @@ Statuses: `open` / `in progress` / `fixed <version>` / `wontfix`.
 | B-9 | No error surface for host apps: ad/page/offer failures invisible or SDK-internal only | high | fixed 0.0.23 | `onAdError` callback + `AdErrorType`/`AdErrorPayload`; folds in B-7 |
 | B-10 | Pages cut off when the host bounds the ad's height (e.g. a weighted slot): sizing was width-driven only | high | fixed 0.0.24 | Bounded height -> each page fits BOTH constraints at its own aspect ratio, centered; hotspot scaling unaffected (driven by measured display size). Reported by the client integration |
 
+## Accessibility (ADA)
+
+Client-reported ADA review, 2026-10-05. Fixed items land in 0.0.26. Verified by reading
+the accessibility tree off the device (`uiautomator dump`) against the hotmapped QA ad,
+plus tap tests that confirm what a screen reader reads matches what activating it does.
+
+| ID | Item | Priority | Status | Notes |
+|----|------|----------|--------|-------|
+| A-0 | Page indicator dots read the wrong page number: label nodes and tap targets came out as separate accessibility nodes offset by one dot, so a screen reader read "page 1" on the dot that jumps to page 2 | high | fixed 0.0.26 | **Client-reported.** Verified on 0.0.25: labels 1/2/6 landed on pages 2/3/5. Label, state and action now live on one merged node per dot; every label now lands on its own page |
+| A-1 | Page image had `contentDescription = null` - the page itself was invisible to screen readers, which could reach hotspots but not the page | high | fixed 0.0.26 | `buildAdPageContentDescription` existed but was never called; now "Weekly ad page N of M" |
+| A-2 | Hotspots unreachable by keyboard / Switch Access: bare `semantics` is not a focus target | high | fixed 0.0.26 | `focusable()` + a focus ring, since the hotspots themselves are invisible (WCAG 2.1.1, 2.4.7) |
+| A-3 | Zoom buttons announced as "plus" and "underscore" - no accessible name | high | fixed 0.0.26 | "Zoom in"/"Zoom out"; the underscore-nudged-13dp minus is now a real minus glyph (WCAG 4.1.2) |
+| A-4 | Page changes never announced - swiping was silent | high | fixed 0.0.26 | Polite live region on the indicator row: "Page N of M" |
+| A-5 | Hotspot targets below the minimum size: 9% of QA-ad hotspots under 48dp, 2 under 24dp (smallest 14x32dp) | high | fixed 0.0.26 | Grown around their centre to 24dp (WCAG 2.5.8). 48dp is deliberately not used: neighbouring offers would start covering each other |
+| A-6 | Indicator dots were 16dp tap targets | medium | fixed 0.0.26 | 24dp pitch x 44dp tall. Dots sit slightly further apart; the pager's reserved indicator height follows `IndicatorRowHeight` so height-bounded hosts still fit a full page (B-10) |
+| A-7 | Dots exposed no selected state - every dot read identically, nothing marked the current page | medium | fixed 0.0.26 | `Role.Tab` + `selected` |
+| A-8 | Loading shimmers were unlabelled empty boxes - silence while the ad loads | medium | fixed 0.0.26 | Labelled + polite live region, ad-level and page-level |
+| A-9 | Offer-loading scrim blocked the view but not input: hotspots behind stayed tappable and screen-reader focusable | medium | fixed 0.0.26 | Consumes pointer events on the initial pass; also labelled. Functional bug as well as ADA |
+| A-10 | Error and retry UI not announced; "Try Again" had no context | medium | fixed 0.0.26 | Assertive live region on the ad-load failure, polite on the page placeholder, descriptive button label |
+| A-11 | Looping pager exposed ~1000x the real page count to accessibility services | medium | fixed 0.0.26 | `CollectionInfo` with the real page count. Exact TalkBack phrasing still wants a manual listen - not observable through `uiautomator dump` |
+| A-12 | Inactive indicator dots are LightGray on white, ~1.6:1 contrast (WCAG 1.4.11 wants 3:1) | low | open | |
+| A-13 | Zoom buttons are fixed 48dp with 30sp glyphs - clip at large font scales (WCAG 1.4.4) | low | open | |
+| A-14 | All announcements are hardcoded English; the SDK ships no `res/` folder | low | open | Needs string resources before any localisation |
+| A-15 | Hotspot descriptions omit price/body copy; no `heading()` semantics for page-to-page jumping | low | open | Also a literal `"null"` string check in `buildHotspotContentDescription` |
+
 ## Hygiene / operational
 
 | ID | Item | Priority | Status | Notes |
