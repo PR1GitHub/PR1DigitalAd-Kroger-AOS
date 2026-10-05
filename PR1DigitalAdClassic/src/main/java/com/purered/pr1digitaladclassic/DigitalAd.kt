@@ -28,6 +28,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -47,6 +48,8 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -58,6 +61,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -517,13 +521,11 @@ internal fun VerticalDigitalAdView(
 // Dots on a side that still has pages beyond the block shrink towards the edge.
 private const val MaxVisibleIndicatorDots = 10
 private val IndicatorDotSize = 8.dp
-// Dot + gap is the distance between tap targets, and it has to be the full 48.dp Android
-// minimum rather than WCAG's 24.dp: accessibility services grow any smaller target to
-// 48.dp and then clip it against its neighbour, which slid every dot's reported bounds
-// half a slot sideways and put the screen reader's focus rectangle between two dots.
-// At 48.dp the dots report exactly the bounds they are drawn at. Dots that no longer fit
-// the width are dropped from the visible band (see below), not squeezed.
-private val IndicatorDotSpacing = 40.dp
+// Dot + gap is the distance between tap targets. 24.dp is the WCAG 2.5.8 minimum; the
+// original 8.dp gap left 16.dp targets, under it. The band stays visually tight at this
+// pitch - 48.dp slots met Android's larger guideline but spread the dots far wider than
+// the client's design allows.
+private val IndicatorDotSpacing = 16.dp
 // Each dot's tap target: as wide as the pitch, and tall enough to be comfortable. The row
 // reserves IndicatorRowHeight below the pager, so height-bounded hosts still fit a page.
 private val IndicatorTouchHeight = 44.dp
@@ -561,6 +563,20 @@ internal fun PagerIndicators(
 
     val slotPx = with(LocalDensity.current) { slotWidth.toPx() }
 
+    // Accessibility services grow any target smaller than the view configuration's
+    // minimum (48.dp) and then clip it against its neighbour. With dots this close that
+    // shifted every dot's REPORTED bounds half a slot sideways, so the screen reader's
+    // focus rectangle sat between two dots. Telling this subtree that a dot-sized target
+    // is the minimum stops the expansion, and the dots report the bounds they are drawn
+    // at - without widening the band.
+    val viewConfiguration = LocalViewConfiguration.current
+    val dotViewConfiguration = remember(viewConfiguration, slotWidth) {
+        object : ViewConfiguration by viewConfiguration {
+            override val minimumTouchTargetSize: DpSize = DpSize(slotWidth, IndicatorTouchHeight)
+        }
+    }
+
+    CompositionLocalProvider(LocalViewConfiguration provides dotViewConfiguration) {
     Row(
         // The row itself carries the live page status. Screen readers announce it on every
         // page change - swiping the pager used to be completely silent - and a user landing
@@ -642,6 +658,7 @@ internal fun PagerIndicators(
                     }
             )
         }
+    }
     }
     }
 }
