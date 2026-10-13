@@ -37,6 +37,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -65,6 +66,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -308,6 +310,21 @@ internal fun HorizontalDigitalAdView(
     // State to track if the user has reached the last page for the first time
     var hasReachedLastPage by remember { mutableStateOf(false) }
 
+    // CLNTIMP-1595: zoom resets on page change. The zoom layer wraps the whole pager,
+    // so without this the page the user left stayed zoomed and the next page arrived
+    // zoomed. The indicator taps below reset BEFORE scrolling, so the user never sees
+    // a magnified page slide; this settled-page observer is the safety net for every
+    // other way the page can change (accessibility scroll actions, programmatic
+    // scrolls). It never fires while the user stays on a page, so zoom-and-pan on a
+    // single page is unaffected. Swipes cannot change the page while zoomed: a
+    // single-finger drag pans the zoomed image instead.
+    val zoomState = rememberZoomableState()
+    LaunchedEffect(pagerState, zoomState) {
+        snapshotFlow { pagerState.settledPage }
+            .drop(1) // the initial page is not a change
+            .collect { zoomState.animateReset() }
+    }
+
     LaunchedEffect(pagerState.currentPage) {
         val actualIndex = pagerState.currentPage % actualPageCount
         if (actualIndex == actualPageCount - 1) {
@@ -430,6 +447,7 @@ internal fun HorizontalDigitalAdView(
             },
             enableZoomButtons = zoomButtonsConfig.enable,
             zoomButtonOffset = zoomButtonsConfig.offsetY,
+            zoomState = zoomState,
         )
 
         PagerIndicators(
@@ -443,6 +461,12 @@ internal fun HorizontalDigitalAdView(
                     val currentVirtualPage = pagerState.currentPage
                     val currentActualPage = currentVirtualPage % actualPageCount
                     val targetVirtualPage = currentVirtualPage + (index - currentActualPage)
+                    // Re-tapping the current dot is not a page change: leave the zoom alone.
+                    if (targetVirtualPage == currentVirtualPage) return@launch
+                    // Unzoom first, then slide: the zoom layer covers the whole pager, so
+                    // scrolling while zoomed would show a magnified, cropped transition
+                    // that then snaps to 1x.
+                    zoomState.animateReset()
                     pagerState.animateScrollToPage(targetVirtualPage)
                 }
             }

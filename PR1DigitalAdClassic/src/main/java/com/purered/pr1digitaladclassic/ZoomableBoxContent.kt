@@ -1,6 +1,8 @@
 package com.purered.pr1digitaladclassic
 
 import android.util.Log
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -21,6 +23,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -38,6 +42,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.lerp
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -207,15 +212,65 @@ fun ZoomableBoxContent(
 }
 */
 
+private const val MinZoom = 1f
+private const val MaxZoom = 5f
+
+/**
+ * Zoom state for [ZoomableBoxContent], hoisted so the owner can reset it.
+ *
+ * The One Ad wraps its whole pager in one ZoomableBoxContent, so this single
+ * scale/offset applies to whichever page is showing. Before this was hoisted the
+ * zoom survived page changes: the page the user left stayed zoomed and the new
+ * page arrived zoomed (CLNTIMP-1595). The pager now calls [animateReset] when the
+ * page changes; nothing resets while the user stays on a page.
+ */
+@Stable
+class ZoomableState internal constructor() {
+    var scale by mutableFloatStateOf(MinZoom)
+        internal set
+    var offset by mutableStateOf(Offset.Zero)
+        internal set
+
+    val isZoomed: Boolean
+        get() = scale > MinZoom || offset != Offset.Zero
+
+    /** Snap straight back to the default view. */
+    fun reset() {
+        scale = MinZoom
+        offset = Offset.Zero
+    }
+
+    /**
+     * Ease back to the default view. A no-op at 1x, so callers can invoke it on
+     * every page change without producing a visible jump when nothing is zoomed.
+     */
+    suspend fun animateReset(durationMillis: Int = ZoomResetDurationMillis) {
+        if (!isZoomed) return
+        val startScale = scale
+        val startOffset = offset
+        animate(0f, 1f, animationSpec = tween(durationMillis)) { fraction, _ ->
+            scale = lerp(startScale, MinZoom, fraction)
+            offset = lerp(startOffset, Offset.Zero, fraction)
+        }
+        reset()
+    }
+
+    companion object {
+        const val ZoomResetDurationMillis = 200
+    }
+}
+
+@Composable
+fun rememberZoomableState(): ZoomableState = remember { ZoomableState() }
+
 @Composable
 fun ZoomableBoxContent(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
     enableZoomButtons: Boolean,
-    zoomButtonOffset: Int
+    zoomButtonOffset: Int,
+    zoomState: ZoomableState = rememberZoomableState()
 ) {
-    var scale by remember { mutableStateOf(1f) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var isTapDetected by remember { mutableStateOf(false) }
 
@@ -251,7 +306,7 @@ fun ZoomableBoxContent(
                     do {
                         val event = awaitPointerEvent()
                         val pointersDown = event.changes.count { it.pressed }
-                        val engaged = pointersDown > 1 || scale > 1f
+                        val engaged = pointersDown > 1 || zoomState.scale > MinZoom
 
                         if (engaged) {
                             val zoomChange = event.calculateZoom()
@@ -276,17 +331,17 @@ fun ZoomableBoxContent(
                                     Log.d("ZoomTracker", "Zoom started")
                                 }
 
-                                scale = (scale * zoomChange).coerceIn(1f, 5f)
+                                zoomState.scale = (zoomState.scale * zoomChange).coerceIn(MinZoom, MaxZoom)
 
-                                val extraWidth = (scale - 1) * boxSize.width
-                                val extraHeight = (scale - 1) * boxSize.height
+                                val extraWidth = (zoomState.scale - 1) * boxSize.width
+                                val extraHeight = (zoomState.scale - 1) * boxSize.height
                                 val maxX = extraWidth / 2
                                 val maxY = extraHeight / 2
 
-                                offset += panChange * 0.8f
-                                offset = Offset(
-                                    x = offset.x.coerceIn(-maxX, maxX),
-                                    y = offset.y.coerceIn(-maxY, maxY)
+                                zoomState.offset += panChange * 0.8f
+                                zoomState.offset = Offset(
+                                    x = zoomState.offset.x.coerceIn(-maxX, maxX),
+                                    y = zoomState.offset.y.coerceIn(-maxY, maxY)
                                 )
 
                                 event.changes.forEach {
@@ -326,10 +381,10 @@ fun ZoomableBoxContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                    translationX = offset.x
-                    translationY = offset.y
+                    scaleX = zoomState.scale
+                    scaleY = zoomState.scale
+                    translationX = zoomState.offset.x
+                    translationY = zoomState.offset.y
                 }
         ) {
             content()
@@ -352,8 +407,8 @@ fun ZoomableBoxContent(
 
                     FloatingActionButton(
                         onClick = {
-                            scale = (scale + 1f)
-                                .coerceAtMost(5f)
+                            zoomState.scale = (zoomState.scale + 1f)
+                                .coerceAtMost(MaxZoom)
                         },
                         // The glyph is the whole button, so without this a screen reader
                         // announced these two controls as "plus" and "underscore".
@@ -373,11 +428,11 @@ fun ZoomableBoxContent(
 
                     FloatingActionButton(
                         onClick = {
-                            scale = (scale - 1f)
-                                .coerceAtLeast(1f)
+                            zoomState.scale = (zoomState.scale - 1f)
+                                .coerceAtLeast(MinZoom)
 
-                            if (scale == 1f) {
-                                offset = Offset.Zero
+                            if (zoomState.scale == MinZoom) {
+                                zoomState.offset = Offset.Zero
                             }
                         },
                         modifier = Modifier
