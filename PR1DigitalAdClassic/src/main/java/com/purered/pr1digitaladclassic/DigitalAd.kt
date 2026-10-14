@@ -289,6 +289,10 @@ internal fun HorizontalDigitalAdView(
     // shared ratio meant every page took the last-measured page's shape, and each
     // image load resized all pages at once - relayout rippling through the pager
     // while it settled is what made it creep forward on its own (B-1).
+    // The ratio comes from each image's intrinsic size once it loads; until then the
+    // default stands in. It used to come from the laid-out image size, which the
+    // aspectRatio box clamps, so pages taller than the default were clipped top and
+    // bottom and never corrected (see AdPageView's onSuccess).
     val defaultAspectRatio = 0.826f
     val pageAspectRatios = remember { mutableStateMapOf<Int, Float>() }
 
@@ -413,16 +417,13 @@ internal fun HorizontalDigitalAdView(
                             saveLogEnabled = ad.isLogEnabled,
                             isScrollable = false,
                             onAdError = onAdError,
-                            onSizeCalculated = { size ->
-                                if (size.width > 0 && size.height > 0) {
-                                    val newRatio = size.width / size.height
-                                    val current = pageAspectRatios[actualPageIndex]
-                                    // Epsilon compare: onGloballyPositioned re-reports on
-                                    // every relayout with float jitter, and an exact !=
-                                    // kept the state churning forever.
-                                    if (current == null || abs(current - newRatio) > 0.01f) {
-                                        pageAspectRatios[actualPageIndex] = newRatio
-                                    }
+                            onImageAspectRatio = { newRatio ->
+                                val current = pageAspectRatios[actualPageIndex]
+                                // Epsilon compare: the looping pager recomposes the same
+                                // page under several virtual indices, and an exact !=
+                                // kept the state churning.
+                                if (current == null || abs(current - newRatio) > 0.01f) {
+                                    pageAspectRatios[actualPageIndex] = newRatio
                                 }
                             }
                         )

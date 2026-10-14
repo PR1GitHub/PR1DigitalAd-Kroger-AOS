@@ -83,7 +83,10 @@ internal fun AdPageView(
     key: Int,
     saveLogEnabled: Boolean,
     isScrollable: Boolean = true,
-    onSizeCalculated: ((Size) -> Unit)? = null,
+    // Reports the loaded image's intrinsic width/height ratio. The pager sizes the
+    // page box from it; see the note on the AsyncImage below for why the laid-out
+    // size cannot be used instead.
+    onImageAspectRatio: ((Float) -> Unit)? = null,
     onAdError: (payload: AdErrorPayload) -> Unit = {},
 ) {
     var imageWidth by remember { mutableStateOf(0f) }
@@ -460,11 +463,7 @@ internal fun AdPageView(
         }, modifier = Modifier
             .fillMaxWidth()
             .onGloballyPositioned { layoutCoordinates ->
-                val size = layoutCoordinates.size.toSize()
-                displaySize = size
-                if (size.width > 0 && size.height > 0) {
-                    onSizeCalculated?.invoke(size)
-                }
+                displaySize = layoutCoordinates.size.toSize()
             }, onError = {
             imageState = "error"
             if (!imageErrorReported) {
@@ -477,8 +476,17 @@ internal fun AdPageView(
                     )
                 )
             }
-        }, onSuccess = { _ ->
+        }, onSuccess = { state ->
             imageState = "success"
+            // The page box has an aspectRatio modifier, so the image's laid-out height is
+            // clamped to the box. FillWidth still draws the image at width / true ratio,
+            // centered, so a page TALLER than the box's ratio overflowed and was clipped
+            // top and bottom - and the laid-out size reported the box's ratio back, so the
+            // box never corrected itself. The intrinsic size cannot be clamped.
+            val image = state.result.image
+            if (image.width > 0 && image.height > 0) {
+                onImageAspectRatio?.invoke(image.width.toFloat() / image.height.toFloat())
+            }
         })
         if (imageState == "success" && convertedHotMaps.isNotEmpty()) {
 
